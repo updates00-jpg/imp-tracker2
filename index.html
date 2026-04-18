@@ -51,6 +51,13 @@ html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSy
 .s-ok{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--green-text);font-weight:600;margin-top:7px}
 .s-warn{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--amber-text);font-weight:600;margin-top:7px}
 .hint{font-size:13px;color:var(--text2);line-height:1.6}
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mic-btn svg{width:16px;height:16px;fill:var(--text2)}
+.mic-btn.listening{background:var(--red);border-color:var(--red);animation:pulse 1s infinite}
+.mic-btn.listening svg{fill:white}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(163,45,45,.4)}50%{box-shadow:0 0 0 6px rgba(163,45,45,0)}}
+.mic-status{font-size:11px;color:var(--text3);margin-top:3px;min-height:15px}
 .ac-wrap{position:relative}
 .ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--blue);border-radius:var(--rsm);z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:180px;overflow-y:auto;margin-top:2px}
 .ac-item{padding:10px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text)}
@@ -293,7 +300,7 @@ function getActionForOccurrence(vtype, occNum){
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 function setPage(p){
-  currentPage=p;stopScan();
+  currentPage=p;stopScan();stopMic();
   ['dash','new','records','qr','data'].forEach(n=>{
     document.getElementById('page-'+n).style.display=n===p?'block':'none';
     const nav=document.getElementById('nav-'+n);if(nav)nav.classList.toggle('active',n===p);
@@ -397,7 +404,13 @@ function renderNew(){
   <div class="field" id="spd-wrap" style="display:none"><label>Speed over limit (km/h)</label><input type="number" id="f-speed" min="1" max="200" placeholder="e.g. 15"/></div>
   <div id="occurrence-box"></div>
   <div class="field" style="display:none"><select id="f-occur"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
-  <div class="field"><label>Location / notes</label><textarea id="f-notes" placeholder="Location, circumstances, witnesses..."></textarea></div>
+  <div class="field mic-wrap"><label>Location / notes</label>
+    <textarea id="f-notes" placeholder="Location, circumstances, witnesses..." style="padding-right:44px"></textarea>
+    <button type="button" class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Voice input">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zm6 8a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21H9v2h6v-2h-2v-2.07A7 7 0 0 0 19 12h-2z"/></svg>
+    </button>
+    <div class="mic-status" id="mic-status"></div>
+  </div>
   <div class="row2">
     <div class="field"><label>Reporting officer</label><input id="f-officer" placeholder="Your name" autocomplete="off"/></div>
     <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
@@ -1483,6 +1496,85 @@ function generatePDFReport(type, personOid){
   });
 }
 
+// ─── SPEECH RECOGNITION ──────────────────────────────────────────────────────
+let _micRecognition = null;
+let _micListening = false;
+
+function toggleMic(){
+  if(_micListening){ stopMic(); return; }
+  startMic();
+}
+
+function startMic(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic-btn');
+  const status = document.getElementById('mic-status');
+
+  if(!SpeechRecognition){
+    if(status) status.textContent = 'Voice input not supported on this browser. Use Chrome (Android) or Safari (iOS).';
+    return;
+  }
+
+  _micRecognition = new SpeechRecognition();
+  _micRecognition.lang = 'en-US';
+  _micRecognition.continuous = true;
+  _micRecognition.interimResults = true;
+
+  let finalTranscript = '';
+
+  _micRecognition.onstart = function(){
+    _micListening = true;
+    if(btn) btn.classList.add('listening');
+    if(status) status.textContent = '🎙 Listening... tap mic to stop';
+    // Save existing text as base
+    const ta = document.getElementById('f-notes');
+    finalTranscript = ta ? ta.value : '';
+    if(finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
+  };
+
+  _micRecognition.onresult = function(e){
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal){ finalTranscript += t + ' '; }
+      else { interim = t; }
+    }
+    const ta = document.getElementById('f-notes');
+    if(ta) ta.value = finalTranscript + interim;
+  };
+
+  _micRecognition.onerror = function(e){
+    stopMic();
+    const status = document.getElementById('mic-status');
+    let msg = 'Voice input error.';
+    if(e.error === 'not-allowed') msg = 'Microphone access denied. Allow microphone in browser settings.';
+    else if(e.error === 'no-speech') msg = 'No speech detected. Try again.';
+    else if(e.error === 'network') msg = 'Network error. Voice recognition may require internet.';
+    if(status) status.textContent = msg;
+  };
+
+  _micRecognition.onend = function(){
+    if(_micListening) stopMic();
+  };
+
+  try {
+    _micRecognition.start();
+  } catch(e) {
+    if(status) status.textContent = 'Could not start microphone.';
+  }
+}
+
+function stopMic(){
+  _micListening = false;
+  const btn = document.getElementById('mic-btn');
+  const status = document.getElementById('mic-status');
+  if(_micRecognition){ try{ _micRecognition.stop(); }catch(e){} _micRecognition = null; }
+  if(btn) btn.classList.remove('listening');
+  if(status) status.textContent = '';
+}
+
+// Stop mic when navigating away from New tab
+const _origSetPage = setPage;
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadData();setPage('dash');
 </script>
