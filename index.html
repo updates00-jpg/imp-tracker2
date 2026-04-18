@@ -481,20 +481,32 @@ function renderRecords(filter) {
 </div>
 <div class="search-wrap">
   <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-  <input class="search-bar" placeholder="Search name, rank, unit, violation..." oninput="renderRecords(this.value)" value="${filter||''}"/>
+  <input class="search-bar" id="search-input" placeholder="Search name, rank, unit, violation..." oninput="liveSearch(this.value)" value="${filter||''}"/>
 </div>`;
 
+  html += '<div id="records-list">';
   if (filtered.length === 0) {
     html += `<div class="empty">${records.length === 0 ? 'No records yet. Add a new violation.' : 'No records match your search.'}</div>`;
   } else {
     filtered.forEach(r => {
-      const dateStr = new Date(r.date).toLocaleString('en-GB', {
-        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-      const tp = totalPtsForPerson(r.oid);
-      const warnLine = (tp >= 4 && !r.susp)
-        ? `<div class="status-warn" style="font-size:12px;margin-top:6px">Accumulated points: ${tp}/5 — approaching suspension threshold</div>` : '';
-      html += `
+      html += buildRecordCard(r);
+    });
+  }
+  html += '</div>';
+
+  document.getElementById('page-records').innerHTML = html;
+  const si = document.getElementById('search-input');
+  if (si && filter) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
+}
+
+function buildRecordCard(r) {
+  const dateStr = new Date(r.date).toLocaleString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+  const tp = totalPtsForPerson(r.oid);
+  const warnLine = (tp >= 4 && !r.susp)
+    ? `<div class="status-warn" style="font-size:12px;margin-top:6px">Accumulated points: ${tp}/5 — approaching suspension threshold</div>` : '';
+  let html = `
 <div class="vc">
   <div class="vc-header">
     <div>
@@ -521,17 +533,66 @@ function renderRecords(filter) {
     ${buildActionSteps(r)}
   </div>
 </div>`;
-    });
-  }
+  return html;
+}
 
-  document.getElementById('page-records').innerHTML = html;
+let _searchFilter = '';
+function liveSearch(val) {
+  _searchFilter = val;
+  const list = document.getElementById('records-list');
+  if (!list) { renderRecords(val); return; }
+  const s = val.toLowerCase();
+  const filtered = records.filter(r =>
+    !s || (r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s)
+  );
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">No records match your search.</div>`;
+  } else {
+    list.innerHTML = filtered.map(r => buildRecordCard(r)).join('');
+  }
 }
 
 function deleteRecord(id) {
-  if (!confirm('Delete this violation record? This cannot be undone.')) return;
-  records = records.filter(r => r.id !== id);
-  saveData();
-  renderRecords();
+  // Show PIN modal instead of confirm
+  showPINModal(id);
+}
+
+function showPINModal(recordId) {
+  const modal = document.getElementById('pin-modal');
+  if (modal) { modal.remove(); }
+  const m = document.createElement('div');
+  m.id = 'pin-modal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML = `
+    <div style="background:var(--bg);border-radius:var(--radius);padding:24px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+      <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Enter PIN to delete</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">This action cannot be undone.</p>
+      <input type="password" inputmode="numeric" id="pin-input" placeholder="Enter PIN" maxlength="8"
+        style="width:100%;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:18px;font-family:inherit;letter-spacing:4px;text-align:center;outline:none;margin-bottom:8px"
+        onkeydown="if(event.key==='Enter')confirmPINDelete('${recordId}')"/>
+      <div id="pin-error" style="font-size:12px;color:var(--red);min-height:18px;margin-bottom:10px;text-align:center"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="flex:1" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+        <button class="btn btn-red" style="flex:1" onclick="confirmPINDelete('${recordId}')">Delete</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  setTimeout(() => { const i = document.getElementById('pin-input'); if(i) i.focus(); }, 50);
+}
+
+function confirmPINDelete(id) {
+  const input = document.getElementById('pin-input');
+  const errEl = document.getElementById('pin-error');
+  const entered = input ? input.value : '';
+  if (entered === '2685') {
+    document.getElementById('pin-modal').remove();
+    records = records.filter(r => r.id !== id);
+    saveData();
+    renderRecords(_searchFilter);
+  } else {
+    if (errEl) errEl.textContent = 'Incorrect PIN. Try again.';
+    if (input) { input.value = ''; input.focus(); }
+  }
 }
 
 // ─── QR SYNC PAGE ─────────────────────────────────────────────────────────────
