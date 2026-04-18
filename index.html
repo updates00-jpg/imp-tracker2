@@ -1052,10 +1052,17 @@ function importSingleRecord(rec,resultId){
 function renderData(){
   document.getElementById('page-data').innerHTML=`
 <div class="card"><p class="sec">PDF reports</p>
-  <p class="hint" style="margin-bottom:10px">Generate a formatted PDF report. Opens as a download. Requires internet connection once to load PDF library.</p>
+  <p class="hint" style="margin-bottom:10px">Generate a formatted PDF report. Requires internet once to load PDF library.</p>
   <button class="btn btn-primary" onclick="generatePDFReport('all')" style="margin-bottom:8px">Full report — all records</button>
   <button class="btn" onclick="generatePDFReport('suspended')" style="margin-bottom:8px">Suspended licenses only</button>
-  <p style="font-size:11px;color:var(--text3);margin-top:2px">To print a single record: open it in Records tab, then use "Print record" button.</p>
+  <div class="field" style="margin-top:10px;margin-bottom:6px">
+    <label>Report for a specific person</label>
+    <select id="pdf-person-sel">
+      <option value="">— Select person —</option>
+    </select>
+  </div>
+  <button class="btn" onclick="generatePersonReport()">Generate person report</button>
+  <p style="font-size:11px;color:var(--text3);margin-top:8px">To print a single record: open it in Records tab → "Print record".</p>
 </div>
 <div class="card" style="margin-top:10px"><p class="sec">Export / share all records</p>
   <p class="hint" style="margin-bottom:10px">Export as JSON file, or copy as text to paste directly into WhatsApp.</p>
@@ -1086,6 +1093,14 @@ function renderData(){
   <p class="hint" style="margin-bottom:10px">Permanently delete all locally stored records. Export first.</p>
   <button class="btn btn-red" onclick="clearAll()">Delete all records</button>
 </div>`;
+  // Populate person select
+  const psel=document.getElementById('pdf-person-sel');
+  if(psel){
+    const pp={};
+    records.forEach(r=>{if(!pp[r.oid])pp[r.oid]={first:r.first,last:r.last,rank:r.rank,oid:r.oid};});
+    const ps=Object.values(pp).sort((a,b)=>a.last.localeCompare(b.last));
+    psel.innerHTML='<option value="">— Select person —</option>'+ps.map(p=>`<option value="${p.oid}">${p.rank} ${p.first} ${p.last}</option>`).join('');
+  }
 }
 function exportJSON(){
   if(records.length===0){alert('No records to export.');return;}
@@ -1237,19 +1252,24 @@ function loadJsPDF(cb){
   document.body.appendChild(s);
 }
 
-function generatePDFReport(type){
-  // type: 'all', 'suspended', 'single' (uses _expandedId)
+function generatePersonReport(){
+  const sel=document.getElementById('pdf-person-sel');
+  if(!sel||!sel.value){alert('Please select a person first.');return;}
+  generatePDFReport('person',sel.value);
+}
+
+function generatePDFReport(type, personOid){
   loadJsPDF(()=>{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pw=210,ph=297,ml=15,mr=15,mt=20,cw=pw-ml-mr;
-    let y=mt;
+    const pw=210,ph=297,ml=15,mr=15,cw=pw-ml-mr;
+    let y=20;
     const now=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-    function checkPage(needed){if(y+needed>ph-15){doc.addPage();y=mt;drawHeader();}}
+    function checkPage(needed){if(y+needed>ph-18){doc.addPage();y=20;drawHeader();}}
+
     function drawHeader(){
       doc.setFillColor(24,95,165);doc.rect(0,0,pw,16,'F');
-      // Logo
       try{doc.addImage(EUFOR_LOGO,'PNG',ml,1,14,14);}catch(e){}
       doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
       doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml+16,7);
@@ -1258,7 +1278,9 @@ function generatePDFReport(type){
       doc.text('SOP 3901 — HQ Camp Commandant',pw-mr,12,{align:'right'});
       doc.setTextColor(0,0,0);
     }
+
     function hline(yy,r,g,b){doc.setDrawColor(r||200,g||200,b||200);doc.line(ml,yy,pw-mr,yy);}
+
     function badge(txt,x,yy,bgR,bgG,bgB,txtR,txtG,txtB){
       doc.setFillColor(bgR,bgG,bgB);
       const tw=doc.getTextWidth(txt)+4;
@@ -1269,59 +1291,129 @@ function generatePDFReport(type){
       return tw+2;
     }
 
-    drawHeader();
-
-    // Title
-    y=24;
-    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
-    const titles={'all':'Violation Records — Full Report','suspended':'Suspended Licenses Report','single':'Individual Violation Record'};
-    doc.text(titles[type]||'Violation Report',ml,y);y+=6;
-    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
-    doc.text('Generated: '+now+' | SOP 3901 — HQ Camp Commandant',ml,y);y+=3;
-    hline(y);y+=5;
-
-    // Summary stats
-    if(type!=='single'){
-      const susp=records.filter(r=>r.susp).length;
-      const pts=records.reduce((s,r)=>s+(r.pts||0),0);
-      doc.setFillColor(245,245,243);doc.rect(ml,y,cw,16,'F');
-      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
-      doc.text('Total records',ml+4,y+5);doc.text('Suspended',ml+40,y+5);doc.text('Total penalty pts',ml+80,y+5);doc.text('Report type',ml+130,y+5);
-      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
-      doc.text(String(records.length),ml+4,y+13);
-      doc.setTextColor(163,45,45);doc.text(String(susp),ml+40,y+13);
-      doc.setTextColor(133,79,11);doc.text(String(pts),ml+80,y+13);
-      doc.setTextColor(24,95,165);doc.text(type==='suspended'?'Suspended only':'All records',ml+130,y+13);
+    function statBox(x,y,w,h,label,value,vr,vg,vb){
+      doc.setFillColor(245,245,243);doc.rect(x,y,w,h,'F');
+      doc.setDrawColor(220,220,220);doc.rect(x,y,w,h,'S');
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+      doc.text(label,x+3,y+5);
+      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(vr||0,vg||0,vb||0);
+      doc.text(String(value),x+3,y+14);
       doc.setTextColor(0,0,0);
-      y+=22;
     }
 
-    // Get records to print
-    let recs=[];
-    if(type==='all')recs=[...records].sort((a,b)=>b.ts-a.ts);
-    else if(type==='suspended')recs=records.filter(r=>r.susp).sort((a,b)=>b.ts-a.ts);
-    else if(type==='single'){recs=_expandedId?records.filter(r=>r.id===_expandedId):[];}
+    drawHeader();
 
+    // ─── TITLE ───────────────────────────────────────────────────────────────
+    y=24;
+    const titles={all:'Violation Records — Full Report',suspended:'Suspended Licenses Report',single:'Individual Violation Record',person:'Individual Violator Report'};
+    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
+    doc.text(titles[type]||'Violation Report',ml,y);y+=6;
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+    doc.text('Generated: '+now+' | SOP 3901 — HQ Camp Commandant',ml,y);y+=4;
+    hline(y);y+=6;
+
+    // ─── GET RECORDS ─────────────────────────────────────────────────────────
+    let recs=[];
+    if(type==='all') recs=[...records].sort((a,b)=>a.ts-b.ts);
+    else if(type==='suspended') recs=records.filter(r=>isPersonCurrentlySuspended(r.oid)).sort((a,b)=>a.ts-b.ts);
+    else if(type==='single') recs=_expandedId?records.filter(r=>r.id===_expandedId):[];
+    else if(type==='person') recs=records.filter(r=>r.oid===personOid).sort((a,b)=>a.ts-b.ts);
+
+    // ─── SUMMARY (not for single record) ─────────────────────────────────────
+    if(type!=='single'){
+      const allRecs = type==='person' ? recs : records;
+      const uniqueOids=[...new Set(allRecs.map(r=>r.oid))];
+      const suspOids=uniqueOids.filter(o=>isPersonCurrentlySuspended(o));
+      const nearOids=uniqueOids.filter(o=>totalPtsForPerson(o)>=4&&!isPersonCurrentlySuspended(o));
+      const totalPts=allRecs.reduce((s,r)=>s+(r.pts||0),0);
+      const drivingCount=allRecs.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving').length;
+      const conductCount=allRecs.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct').length;
+      const speedCount=allRecs.filter(r=>r.vtype.toLowerCase().includes('speeding')).length;
+
+      // Date range
+      const sorted=[...allRecs].sort((a,b)=>a.ts-b.ts);
+      const dateFrom=sorted.length?new Date(sorted[0].ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      const dateTo=sorted.length?new Date(sorted[sorted.length-1].ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+
+      // Row 1: main stats (4 boxes)
+      const bw=(cw-9)/4;
+      statBox(ml,y,bw,18,'Total records',allRecs.length,0,0,0);
+      statBox(ml+bw+3,y,bw,18,'Unique violators',uniqueOids.length,24,95,165);
+      statBox(ml+(bw+3)*2,y,bw,18,'Licenses suspended',suspOids.length,163,45,45);
+      statBox(ml+(bw+3)*3,y,bw,18,'Near suspension (4+)',nearOids.length,133,79,11);
+      y+=22;
+
+      // Row 2: violation breakdown (4 boxes)
+      statBox(ml,y,bw,18,'Total penalty pts',totalPts,133,79,11);
+      statBox(ml+bw+3,y,bw,18,'Driving violations',drivingCount,24,95,165);
+      statBox(ml+(bw+3)*2,y,bw,18,'Conduct violations',conductCount,63,109,17);
+      statBox(ml+(bw+3)*3,y,bw,18,'Speeding incidents',speedCount,80,80,80);
+      y+=22;
+
+      // Date range bar
+      doc.setFillColor(235,241,251);doc.rect(ml,y,cw,7,'F');
+      doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(24,95,165);
+      doc.text(`Report period: ${dateFrom} — ${dateTo}`,ml+3,y+5);
+      if(type==='person'&&recs.length>0){
+        const p=recs[0];
+        doc.setFont('helvetica','bold');
+        doc.text(`${p.rank} ${p.first} ${p.last} · ${p.unit||'—'}`,pw-mr,y+5,{align:'right'});
+      }
+      doc.setTextColor(0,0,0);
+      y+=11;
+
+      // ─── TOP VIOLATORS (only for all/suspended reports) ──────────────────
+      if(type!=='person'){
+        const topPeople=uniqueOids.map(o=>{
+          const pr=records.filter(r=>r.oid===o)[0];
+          return{oid:o,name:`${pr.rank} ${pr.first} ${pr.last}`,unit:pr.unit||'—',pts:totalPtsForPerson(o),count:records.filter(r=>r.oid===o).length,susp:isPersonCurrentlySuspended(o)};
+        }).sort((a,b)=>b.pts-a.pts||b.count-a.count).slice(0,5);
+
+        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+        doc.text('Top violators by penalty points:',ml,y);y+=5;
+
+        topPeople.forEach((p,i)=>{
+          checkPage(8);
+          doc.setFillColor(i%2===0?248:255,i%2===0?248:255,i%2===0?246:255);
+          doc.rect(ml,y-3,cw,7,'F');
+          doc.setFontSize(8);doc.setFont('helvetica',p.susp?'bold':'normal');
+          doc.setTextColor(p.susp?163:0,p.susp?45:0,p.susp?45:0);
+          doc.text(`${i+1}. ${p.name}`,ml+3,y+1);
+          doc.setTextColor(80,80,80);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+          doc.text(p.unit,ml+95,y+1);
+          doc.text(`${p.count} violations`,ml+130,y+1);
+          let bx=ml+155;
+          if(p.pts>0) bx+=badge(`${p.pts} pts`,bx,y+1,250,237,192,133,79,11);
+          if(p.susp) badge('SUSPENDED',bx,y+1,252,235,235,163,45,45);
+          y+=7;
+        });
+        y+=4;
+        hline(y);y+=6;
+      }
+    }
+
+    // ─── VIOLATION RECORDS ───────────────────────────────────────────────────
     if(recs.length===0){
-      doc.setFontSize(10);doc.text('No records to display.',ml,y);
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+      doc.text('No records to display.',ml,y);
     }
 
     recs.forEach((r,idx)=>{
-      const cardH=r.susp?52:40;
-      checkPage(cardH+6);
+      const dynStatus=getLicenseStatusAt(r.id);
+      const isSusp=dynStatus.suspended;
+      const cardH=isSusp?52:42;
+      checkPage(cardH+5);
 
-      // Record box
-      const boxColor=r.susp?[252,235,235]:idx%2===0?[255,255,255]:[250,250,248];
+      const boxColor=isSusp?[252,235,235]:idx%2===0?[255,255,255]:[250,250,248];
       doc.setFillColor(...boxColor);
-      doc.setDrawColor(r.susp?163:220,r.susp?45:220,r.susp?45:220);
+      doc.setDrawColor(isSusp?163:210,isSusp?45:210,isSusp?45:210);
       doc.roundedRect(ml,y,cw,cardH,2,2,'FD');
 
-      // Left bar accent
-      doc.setFillColor(r.susp?163:24,r.susp?45:95,r.susp?45:165);
+      // Left accent bar
+      doc.setFillColor(isSusp?163:24,isSusp?45:95,isSusp?45:165);
       doc.rect(ml,y,2,cardH,'F');
 
-      const x=ml+5,x2=ml+105;
-      let ry=y+6;
+      const x=ml+5;let ry=y+6;
 
       // Name + rank
       doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
@@ -1330,56 +1422,63 @@ function generatePDFReport(type){
       // Date top right
       doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
       const dstr=new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      doc.text(dstr,pw-mr-2,ry,{align:'right'});
-      ry+=5;
+      doc.text(dstr,pw-mr-2,ry,{align:'right'});ry+=5;
 
-      // Unit + officer
-      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
-      doc.text(`Unit: ${r.unit||'—'}   |   Reported by: ${r.officer||'—'}   |   Occurrence: #${r.occur}`,x,ry);
-      ry+=5;
+      // Unit + officer + occurrence
+      doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+      doc.text(`Unit: ${r.unit||'—'}  |  Reported by: ${r.officer||'—'}  |  Occurrence #${r.occur} (this violation type)`,x,ry);ry+=5;
 
       // Violation type
       doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
-      const vtxt=r.vtype.length>70?r.vtype.slice(0,68)+'...':r.vtype;
+      const vtxt=r.vtype.length>75?r.vtype.slice(0,73)+'…':r.vtype;
       doc.text(vtxt,x,ry);ry+=5;
 
-      // Badges row
+      // Badges
       let bx=x;
-      if(r.pts>0)bx+=badge(`${r.pts} PTS`,bx,ry,250,237,192,133,79,11);
-      if(r.susp)bx+=badge('SUSPENDED',bx,ry,252,235,235,163,45,45);
-      if(r.speed)bx+=badge(`${r.speed} km/h over`,bx,ry,230,230,230,60,60,60);
+      if(r.pts>0) bx+=badge(`${r.pts} PTS`,bx,ry,250,237,192,133,79,11);
+      if(dynStatus.isThresholdRecord) bx+=badge('SUSPENDED HERE',bx,ry,252,235,235,163,45,45);
+      else if(isSusp) bx+=badge('SUSP. CARRY-OVER',bx,ry,252,235,235,200,100,100);
+      if(r.speed) bx+=badge(`${r.speed} km/h over`,bx,ry,230,230,230,60,60,60);
       ry+=7;
 
-      if(r.susp){
+      // License status line
+      if(isSusp){
         doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(163,45,45);
-        doc.text(`Suspension: ${r.suspDuration||''}${r.suspUntil?' — until '+r.suspUntil:''}`,x,ry);ry+=4.5;
-        doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
-        const nl=(r.notify&&r.notify.length)?r.notify.join(', '):'—';
-        doc.text(`Notify: ${nl}`,x,ry);ry+=4.5;
+        const suspLine=dynStatus.isThresholdRecord
+          ?`Suspension triggered: ${dynStatus.reason==='5pts'?'5-point threshold ('+dynStatus.pts+' pts)':'mandatory suspension'}${r.suspUntil?' — until '+r.suspUntil:''}`
+          :`License suspended (carry-over from previous violation)`;
+        doc.text(suspLine,x,ry);ry+=4.5;
+        if(r.notify&&r.notify.length){
+          doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+          doc.text(`Notify: ${r.notify.join(', ')}`,x,ry);ry+=4.5;
+        }
+      } else {
+        doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+        doc.text(`License valid at time of record — ${dynStatus.pts}/5 pts accumulated`,x,ry);ry+=4;
       }
 
       if(r.notes){
-        doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(100,100,100);
-        const nlines=doc.splitTextToSize(`Notes: ${r.notes}`,cw-10);
-        doc.text(nlines[0]+(nlines.length>1?'…':''),x,ry);
+        doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(120,120,120);
+        const nl=doc.splitTextToSize(`Notes: ${r.notes}`,cw-10);
+        doc.text(nl[0]+(nl.length>1?'…':''),x,ry);
       }
 
       y+=cardH+4;
     });
 
-    // Footer on each page
-    const totalPages=doc.internal.getNumberOfPages();
-    for(let i=1;i<=totalPages;i++){
+    // ─── FOOTER ──────────────────────────────────────────────────────────────
+    const tp=doc.internal.getNumberOfPages();
+    for(let i=1;i<=tp;i++){
       doc.setPage(i);
-      // footer line
       doc.setDrawColor(200,200,200);doc.line(ml,ph-12,pw-mr,ph-12);
       doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,150,150);
       doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml,ph-7);
-      doc.text(`Page ${i} of ${totalPages}`,pw-mr,ph-7,{align:'right'});
+      doc.text(`Page ${i} of ${tp}`,pw-mr,ph-7,{align:'right'});
       doc.text('HQ EUFOR / NHQ Sa — Camp Butmir — SOP 3901',pw/2,ph-7,{align:'center'});
     }
 
-    const fname=`IMP_Report_${type}_${new Date().toISOString().slice(0,10)}.pdf`;
+    const personName=type==='person'&&recs.length?`_${recs[0].last}`:'';
+    const fname=`IMP_Report_${type}${personName}_${new Date().toISOString().slice(0,10)}.pdf`;
     doc.save(fname);
   });
 }
