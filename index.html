@@ -9,1005 +9,765 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <title>Camp Butmir — IMP Violation Tracker</title>
 <style>
-  :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f4;
-    --bg3: #eeede9;
-    --text: #1a1a19;
-    --text2: #6b6b68;
-    --text3: #999994;
-    --border: rgba(0,0,0,0.12);
-    --border2: rgba(0,0,0,0.22);
-    --radius: 10px;
-    --radius-sm: 7px;
-    --blue: #185FA5;
-    --blue-bg: #E6F1FB;
-    --blue-text: #0C447C;
-    --green: #3B6D11;
-    --green-bg: #EAF3DE;
-    --green-text: #27500A;
-    --red: #A32D2D;
-    --red-bg: #FCEBEB;
-    --red-text: #791F1F;
-    --amber: #854F0B;
-    --amber-bg: #FAEEDA;
-    --amber-text: #633806;
-    --gray-bg: #F1EFE8;
-    --gray-text: #5F5E5A;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a;
-      --bg2: #252523;
-      --bg3: #2e2e2b;
-      --text: #f0efe8;
-      --text2: #a0a09a;
-      --text3: #6b6b66;
-      --border: rgba(255,255,255,0.10);
-      --border2: rgba(255,255,255,0.18);
-      --blue: #378ADD;
-      --blue-bg: #042C53;
-      --blue-text: #B5D4F4;
-      --green: #639922;
-      --green-bg: #173404;
-      --green-text: #C0DD97;
-      --red: #E24B4A;
-      --red-bg: #501313;
-      --red-text: #F7C1C1;
-      --amber: #EF9F27;
-      --amber-bg: #412402;
-      --amber-text: #FAC775;
-      --gray-bg: #2C2C2A;
-      --gray-text: #B4B2A9;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg3); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); }
-  body { overflow-x: hidden; }
-
-  .app { max-width: 480px; margin: 0 auto; padding: 12px 12px 90px; min-height: 100vh; }
-
-  /* Header */
-  .header { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
-  .header-icon { width: 40px; height: 40px; background: var(--blue); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .header-icon svg { width: 22px; height: 22px; fill: white; }
-  .header h1 { font-size: 15px; font-weight: 600; color: var(--text); }
-  .header p { font-size: 11px; color: var(--text2); margin-top: 1px; }
-
-  /* Bottom nav */
-  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 0.5px solid var(--border); display: flex; z-index: 100; max-width: 480px; margin: 0 auto; }
-  .nav-item { flex: 1; padding: 10px 4px 8px; text-align: center; cursor: pointer; border: none; background: none; color: var(--text2); font-family: inherit; }
-  .nav-item svg { width: 22px; height: 22px; display: block; margin: 0 auto 3px; }
-  .nav-item span { font-size: 10px; display: block; }
-  .nav-item.active { color: var(--blue); }
-  .nav-item.active svg { stroke: var(--blue); }
-
-  /* Cards */
-  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
-  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
-
-  /* Form fields */
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
-  .field input, .field select, .field textarea {
-    width: 100%; padding: 10px 12px; border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
-    font-size: 15px; font-family: inherit; outline: none; appearance: none; -webkit-appearance: none;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.12); }
-  .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* Buttons */
-  .btn { width: 100%; padding: 12px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .15s; }
-  .btn:active { opacity: .7; }
-  .btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
-  .btn-green { background: var(--green); color: white; border-color: var(--green); }
-  .btn-red { background: var(--red); color: white; border-color: var(--red); }
-  .btn-sm { width: auto; padding: 5px 11px; font-size: 12px; }
-  .btn-row { display: flex; gap: 8px; margin-top: 4px; }
-  .btn-row .btn { margin-top: 0; }
-
-  /* Badges */
-  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 3px; }
-  .badge-red { background: var(--red-bg); color: var(--red-text); }
-  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
-  .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
-  .badge-green { background: var(--green-bg); color: var(--green-text); }
-  .badge-gray { background: var(--gray-bg); color: var(--gray-text); }
-
-  /* Status boxes */
-  .status-suspended { background: var(--red-bg); border: 0.5px solid var(--red); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; color: var(--red-text); font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
-  .status-ok { background: var(--green-bg); border: 0.5px solid var(--green); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; color: var(--green-text); font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
-  .status-warn { background: var(--amber-bg); border: 0.5px solid var(--amber); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; color: var(--amber-text); font-weight: 600; margin-top: 8px; }
-
-  /* Violation cards */
-  .vc { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 8px; }
-  .vc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-  .vc-name { font-size: 15px; font-weight: 600; color: var(--text); }
-  .vc-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
-  .vc-notes { font-size: 12px; color: var(--text2); margin-top: 5px; font-style: italic; }
-  .vc-footer { font-size: 11px; color: var(--text3); margin-top: 6px; }
-
-  /* Summary grid */
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .sc { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
-  .sc-num { font-size: 26px; font-weight: 600; color: var(--text); }
-  .sc-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
-
-  /* Search */
-  .search-wrap { position: relative; margin-bottom: 10px; }
-  .search-bar { width: 100%; padding: 10px 12px 10px 36px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; outline: none; }
-  .search-bar:focus { border-color: var(--blue); }
-  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
-
-  /* QR */
-  .qr-outer { text-align: center; padding: 16px 0; }
-  .qr-outer canvas, .qr-outer img { border-radius: var(--radius-sm); border: 4px solid white; box-shadow: 0 0 0 1px var(--border); display: inline-block; }
-  .qr-info { font-size: 12px; color: var(--text2); margin-top: 10px; line-height: 1.6; }
-
-  /* Scan area */
-  .scan-area { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 20px 16px; text-align: center; margin: 10px 0; }
-  .scan-area p { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.5; }
-  #scan-video { width: 100%; border-radius: var(--radius-sm); max-height: 240px; object-fit: cover; display: block; }
-
-  /* Import result */
-  .import-success { background: var(--green-bg); border: 0.5px solid var(--green); border-radius: var(--radius-sm); padding: 12px; margin-top: 10px; }
-  .import-success p { font-size: 13px; color: var(--green-text); }
-  .import-already { background: var(--amber-bg); border: 0.5px solid var(--amber); border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px; font-size: 13px; color: var(--amber-text); }
-
-  /* Select list */
-  .rec-select { width: 100%; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 13px; padding: 8px; font-family: inherit; }
-
-  /* Data tab */
-  .data-row { display: flex; gap: 8px; }
-  .data-row .btn { margin: 0; }
-
-  .empty { text-align: center; padding: 36px 16px; color: var(--text3); font-size: 14px; }
-
-  /* Divider */
-  .divider { height: 0.5px; background: var(--border); margin: 14px 0; }
-
-  /* Info hint */
-  .hint { font-size: 12px; color: var(--text2); line-height: 1.6; }
+:root{--bg:#fff;--bg2:#f5f5f4;--bg3:#eeede9;--text:#1a1a19;--text2:#6b6b68;--text3:#999994;--border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.22);--radius:10px;--rsm:7px;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;--green:#3B6D11;--green-bg:#EAF3DE;--green-text:#27500A;--red:#A32D2D;--red-bg:#FCEBEB;--red-text:#791F1F;--amber:#854F0B;--amber-bg:#FAEEDA;--amber-text:#633806;--gray-bg:#F1EFE8;--gray-text:#5F5E5A}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0efe8;--text2:#a0a09a;--text3:#6b6b66;--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);--blue:#378ADD;--blue-bg:#042C53;--blue-text:#B5D4F4;--green:#639922;--green-bg:#173404;--green-text:#C0DD97;--red:#E24B4A;--red-bg:#501313;--red-text:#F7C1C1;--amber:#EF9F27;--amber-bg:#412402;--amber-text:#FAC775;--gray-bg:#2C2C2A;--gray-text:#B4B2A9}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text)}
+.app{max-width:480px;margin:0 auto;padding:12px 12px 90px;min-height:100vh}
+.header{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.header-icon{width:38px;height:38px;background:var(--blue);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-icon svg{width:20px;height:20px;fill:white}
+.header h1{font-size:14px;font-weight:600;color:var(--text)}
+.header p{font-size:11px;color:var(--text2);margin-top:1px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;max-width:480px;margin:0 auto}
+.nav-item{flex:1;padding:8px 4px 6px;text-align:center;cursor:pointer;border:none;background:none;color:var(--text2);font-family:inherit}
+.nav-item svg{width:20px;height:20px;display:block;margin:0 auto 2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-item span{font-size:10px;display:block}
+.nav-item.active{color:var(--blue)}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.sec{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn:active{opacity:.7}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{width:auto;padding:5px 10px;font-size:12px}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{margin:0}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-right:3px;margin-bottom:3px}
+.b-red{background:var(--red-bg);color:var(--red-text)}
+.b-amber{background:var(--amber-bg);color:var(--amber-text)}
+.b-blue{background:var(--blue-bg);color:var(--blue-text)}
+.b-green{background:var(--green-bg);color:var(--green-text)}
+.b-gray{background:var(--gray-bg);color:var(--gray-text)}
+.s-susp{background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--red-text);font-weight:600;margin-top:7px}
+.s-ok{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--green-text);font-weight:600;margin-top:7px}
+.s-warn{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--amber-text);font-weight:600;margin-top:7px}
+.hint{font-size:13px;color:var(--text2);line-height:1.6}
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+/* Dashboard */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.dash-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer}
+.dash-card:active{opacity:.7}
+.dash-num{font-size:28px;font-weight:600;color:var(--text);line-height:1}
+.dash-lbl{font-size:11px;color:var(--text2);margin-top:4px}
+.dash-num.red{color:var(--red)}
+.dash-num.amber{color:var(--amber)}
+.dash-num.blue{color:var(--blue)}
+.recent-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.recent-item:last-child{border-bottom:none}
+.ri-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ri-dot.red{background:var(--red)}
+.ri-dot.green{background:var(--green)}
+.ri-dot.amber{background:var(--amber)}
+.ri-name{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:0}
+.ri-sub{font-size:11px;color:var(--text3);white-space:nowrap}
+.warn-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.warn-item:last-child{border-bottom:none}
+.warn-pts{font-size:20px;font-weight:600;color:var(--amber);width:32px;text-align:center;flex-shrink:0}
+.warn-name{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.warn-sub{font-size:11px;color:var(--text3)}
+/* Records page */
+.toolbar{display:flex;gap:6px;margin-bottom:10px;align-items:center}
+.search-wrap{position:relative;flex:1}
+.search-bar{width:100%;padding:9px 11px 9px 34px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.search-bar:focus{border-color:var(--blue)}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;width:15px;height:15px}
+.view-btns{display:flex;gap:4px}
+.vbtn{padding:8px 9px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.vbtn svg{width:16px;height:16px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vbtn.active{background:var(--blue-bg);border-color:var(--blue)}
+.vbtn.active svg{stroke:var(--blue)}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.fchip{padding:5px 11px;border:0.5px solid var(--border2);border-radius:20px;background:var(--bg);font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:inherit}
+.fchip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sort-sel{padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:12px;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+/* List view */
+.lv-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}
+.lv-item:active{opacity:.8}
+.lv-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.lv-status.susp{background:var(--red)}
+.lv-status.ok{background:var(--green)}
+.lv-status.warn{background:var(--amber)}
+.lv-main{flex:1;min-width:0}
+.lv-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-vtype{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-right{text-align:right;flex-shrink:0}
+.lv-date{font-size:11px;color:var(--text3)}
+.lv-pts{font-size:11px;font-weight:600;color:var(--amber-text);background:var(--amber-bg);padding:2px 6px;border-radius:10px;margin-top:3px;display:inline-block}
+/* Expanded detail */
+.detail-panel{background:var(--bg2);border-radius:var(--rsm);padding:12px;margin-top:4px;margin-bottom:4px}
+/* Person view */
+.pv-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.pv-header{padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.pv-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pv-avatar.susp{background:var(--red-bg);color:var(--red-text)}
+.pv-avatar.warn{background:var(--amber-bg);color:var(--amber-text)}
+.pv-avatar.ok{background:var(--blue-bg);color:var(--blue-text)}
+.pv-info{flex:1;min-width:0}
+.pv-name{font-size:14px;font-weight:600;color:var(--text)}
+.pv-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.pv-pts{font-size:22px;font-weight:700;text-align:right;line-height:1}
+.pv-ptslbl{font-size:10px;color:var(--text3);text-align:right}
+.pv-records{border-top:0.5px solid var(--border);padding:0 14px}
+/* Action steps */
+.action-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rsm);padding:10px 12px;margin-top:8px;font-size:12px;line-height:1.8}
+.action-box p.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:5px}
+/* QR */
+.qr-outer{text-align:center;padding:14px 0}
+.qr-outer canvas,.qr-outer img{border-radius:var(--rsm);border:4px solid white;box-shadow:0 0 0 1px var(--border);display:inline-block}
+.qr-info{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6}
+.scan-area{border:2px dashed var(--border2);border-radius:var(--radius);padding:18px;text-align:center;margin:10px 0}
+.scan-area p{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+#scan-video{width:100%;border-radius:var(--rsm);max-height:240px;object-fit:cover;display:block}
+.import-success{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:12px;margin-top:8px}
+.import-already{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:10px 12px;margin-top:8px;font-size:13px;color:var(--amber-text)}
+.rec-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:13px;padding:8px;font-family:inherit}
 </style>
 </head>
 <body>
 <div class="app" id="app">
-
-  <!-- Header -->
   <div class="header">
-    <div class="header-icon">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7l-9-5zm-1 13l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/>
-      </svg>
-    </div>
-    <div>
-      <h1>Camp Butmir — IMP Tracker</h1>
-      <p>Offline · NATO/EUFOR · Violation Records</p>
-    </div>
+    <div class="header-icon"><svg viewBox="0 0 24 24"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7l-9-5zm-1 13l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg></div>
+    <div><h1>Camp Butmir — IMP Tracker</h1><p>Offline · NATO/EUFOR · SOP 3901</p></div>
   </div>
-
-  <!-- Page content -->
-  <div id="page-new"></div>
+  <div id="page-dash"></div>
+  <div id="page-new" style="display:none"></div>
   <div id="page-records" style="display:none"></div>
   <div id="page-qr" style="display:none"></div>
   <div id="page-data" style="display:none"></div>
-
 </div>
-
-<!-- Bottom nav -->
-<nav class="nav" id="bottom-nav">
-  <button class="nav-item active" onclick="setPage('new')" id="nav-new">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    <span>New</span>
+<nav class="nav">
+  <button class="nav-item" onclick="setPage('dash')" id="nav-dash">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Dashboard</span>
+  </button>
+  <button class="nav-item" onclick="setPage('new')" id="nav-new">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span>New</span>
   </button>
   <button class="nav-item" onclick="setPage('records')" id="nav-records">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-    <span>Records</span>
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Records</span>
   </button>
   <button class="nav-item" onclick="setPage('qr')" id="nav-qr">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
-    <span>QR Sync</span>
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>QR Sync</span>
   </button>
   <button class="nav-item" onclick="setPage('data')" id="nav-data">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-    <span>Data</span>
+    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span>Data</span>
   </button>
 </nav>
-
-<!-- QR library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <script>
-// ─── DATA ────────────────────────────────────────────────────────────────────
-
-const NATO_RANKS = [
-  { g: 'OR — Other Ranks', ranks: [
-    'OR-1 (Private)', 'OR-2 (Private 2nd Class)', 'OR-3 (Lance Corporal)',
-    'OR-4 (Corporal)', 'OR-5 (Sergeant)', 'OR-6 (Staff Sergeant)',
-    'OR-7 (Sergeant First Class)', 'OR-8 (Master Sergeant)', 'OR-9 (Sergeant Major)'
-  ]},
-  { g: 'OF — Officers', ranks: [
-    'OF-1 (Second Lieutenant)', 'OF-2 (First Lieutenant)', 'OF-3 (Captain)',
-    'OF-4 (Major)', 'OF-5 (Lieutenant Colonel)', 'OF-6 (Colonel)',
-    'OF-7 (Brigadier General)', 'OF-8 (Major General)',
-    'OF-9 (Lieutenant General)', 'OF-10 (General)'
-  ]},
-  { g: 'Civilian', ranks: ['CIV (Civilian)'] }
+const NATO_RANKS=[
+  {g:'OR — Other Ranks',ranks:['OR-1 (Private)','OR-2 (Private 2nd Class)','OR-3 (Lance Corporal)','OR-4 (Corporal)','OR-5 (Sergeant)','OR-6 (Staff Sergeant)','OR-7 (Sergeant First Class)','OR-8 (Master Sergeant)','OR-9 (Sergeant Major)']},
+  {g:'OF — Officers',ranks:['OF-1 (Second Lieutenant)','OF-2 (First Lieutenant)','OF-3 (Captain)','OF-4 (Major)','OF-5 (Lieutenant Colonel)','OF-6 (Colonel)','OF-7 (Brigadier General)','OF-8 (Major General)','OF-9 (Lieutenant General)','OF-10 (General)']},
+  {g:'Civilian',ranks:['CIV (Civilian)']}
 ];
-
-const VIOLATIONS = {
-  'Speeding 5-10 km/h over limit':          { pts: 1, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)'] },
-  'Speeding 11-20 km/h over limit':         { pts: 2, cat: 'driving', suspDays: 14, notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
-  'Speeding 21+ km/h over limit':           { pts: 3, cat: 'driving', suspDays: 14, notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
-  'Parking in front of Bldg 200 / circle':  { pts: 3, cat: 'driving', notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
-  'Parking violation':                       { pts: 0, cat: 'driving', notify: ['SNR/Branch Chief (3rd violation+)'] },
-  'Smoking in NATO/EUFOR vehicle':          { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
-  'Failure to fasten seatbelt':             { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)'] },
-  'Using cellphone during driving':         { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
-  'Operating vehicle under alcohol/drugs':  { pts: 0, cat: 'driving', suspend: true, suspEOT: true, notify: ['SNR/Branch Chief', 'FPM', 'HQ CAMP CMDT'] },
-  'Causing damage to EUFOR/NATO vehicle':   { pts: 0, cat: 'driving', suspend: true, suspEOT: true, notify: ['SNR/Branch Chief', 'FPM', 'HQ CAMP CMDT'] },
-  'Failure to report to IMP':               { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
-  'Uncooperative behaviour to IMP':         { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
-  'Dress prescription violation':           { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
-  'Alcohol prescription violation':         { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
-  'Weapon carry prescription violation':    { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
-  'Pedestrian violation':                   { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)'] },
-  'Bicycle/scooter violation':              { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)'] },
-  'Quiet hours violation':                  { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
-  'Not carrying ID card (visible place)':   { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)', 'FPM'] },
-  'Not carrying ID card in Camp Butmir':    { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] }
+const VIOLATIONS={
+  'Speeding 5-10 km/h over limit':{pts:1,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)']},
+  'Speeding 11-20 km/h over limit':{pts:2,cat:'driving',suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Speeding 21+ km/h over limit':{pts:3,cat:'driving',suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking in front of Bldg 200 / circle':{pts:3,cat:'driving',notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking violation':{pts:0,cat:'driving',notify:['SNR/Branch Chief (3rd violation+)']},
+  'Smoking in NATO/EUFOR vehicle':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
+  'Failure to fasten seatbelt':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)']},
+  'Using cellphone during driving':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
+  'Operating vehicle under alcohol/drugs':{pts:0,cat:'driving',suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Causing damage to EUFOR/NATO vehicle':{pts:0,cat:'driving',suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Failure to report to IMP':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
+  'Uncooperative behaviour to IMP':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
+  'Dress prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
+  'Alcohol prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Weapon carry prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
+  'Pedestrian violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)']},
+  'Bicycle/scooter violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)']},
+  'Quiet hours violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
+  'Not carrying ID card (visible place)':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)','FPM']},
+  'Not carrying ID card in Camp Butmir':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']}
 };
 
-let records = [];
-let scanStream = null;
-let scanInterval = null;
-let currentPage = 'new';
+let records=[];
+let scanStream=null,scanInterval=null,currentPage='dash';
+let _searchFilter='',_sortMode='newest',_filterMode='all',_viewMode='list',_expandedId=null,_expandedPerson=null;
 
-// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function loadData(){try{const d=localStorage.getItem('cbvt_v3');if(d)records=JSON.parse(d);}catch(e){}}
+function saveData(){try{localStorage.setItem('cbvt_v3',JSON.stringify(records));}catch(e){}}
+function totalPtsForPerson(oid){return records.filter(r=>r.oid===oid).reduce((s,r)=>s+(r.pts||0),0);}
 
-function loadData() {
-  try { const d = localStorage.getItem('cbvt_v3'); if (d) records = JSON.parse(d); } catch(e) {}
-}
-function saveData() {
-  try { localStorage.setItem('cbvt_v3', JSON.stringify(records)); } catch(e) {}
-}
-function totalPtsForPerson(oid) {
-  return records.filter(r => r.oid === oid).reduce((s, r) => s + (r.pts || 0), 0);
-}
-
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-
-function setPage(p) {
-  currentPage = p;
-  stopScan();
-  ['new','records','qr','data'].forEach(n => {
-    document.getElementById('page-' + n).style.display = n === p ? 'block' : 'none';
-    document.getElementById('nav-' + n).classList.toggle('active', n === p);
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function setPage(p){
+  currentPage=p;stopScan();
+  ['dash','new','records','qr','data'].forEach(n=>{
+    document.getElementById('page-'+n).style.display=n===p?'block':'none';
+    const nav=document.getElementById('nav-'+n);if(nav)nav.classList.toggle('active',n===p);
   });
-  if (p === 'new')     renderNew();
-  if (p === 'records') renderRecords();
-  if (p === 'qr')      renderQR();
-  if (p === 'data')    renderData();
-  window.scrollTo(0, 0);
+  if(p==='dash')renderDash();
+  if(p==='new')renderNew();
+  if(p==='records')renderRecords();
+  if(p==='qr')renderQR();
+  if(p==='data')renderData();
+  window.scrollTo(0,0);
 }
 
-// ─── NEW RECORD PAGE ─────────────────────────────────────────────────────────
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDash(){
+  const suspCount=records.filter(r=>r.susp).length;
+  // People approaching 5pts (4pts, not yet suspended)
+  const people={};
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,oid:r.oid};});
+  const nearLimit=Object.values(people).filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!records.find(r=>r.oid===p.oid&&r.susp);});
+  const recent=records.slice(0,3);
+  const total=records.length;
 
-function renderNew() {
-  let rankOpts = '<option value="">Select rank...</option>';
-  NATO_RANKS.forEach(g => {
-    rankOpts += `<optgroup label="${g.g}">`;
-    g.ranks.forEach(r => { rankOpts += `<option>${r}</option>`; });
-    rankOpts += '</optgroup>';
-  });
-
-  let vOptsDriving = '<optgroup label="Driving violations">';
-  let vOptsConduct = '<optgroup label="Conduct violations">';
-  Object.entries(VIOLATIONS).forEach(([name, v]) => {
-    const pts = v.suspend ? ' [LICENSE SUSPENDED]' : v.pts > 0 ? ` [${v.pts} pt${v.pts>1?'s':''}]` : '';
-    const opt = `<option value="${name}">${name}${pts}</option>`;
-    if (v.cat === 'driving') vOptsDriving += opt;
-    else vOptsConduct += opt;
-  });
-  vOptsDriving += '</optgroup>';
-  vOptsConduct += '</optgroup>';
-
-  const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  const dt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-  document.getElementById('page-new').innerHTML = `
-<div class="card">
-  <p class="section-title">Violator details</p>
-  <div class="field"><label>NATO Rank</label>
-    <select id="f-rank">${rankOpts}</select>
+  let html=`
+<div class="dash-grid">
+  <div class="dash-card" onclick="setPage('records');_filterMode='all'">
+    <div class="dash-num blue">${total}</div><div class="dash-lbl">Total records</div>
   </div>
+  <div class="dash-card" onclick="setPage('records');_filterMode='suspended'">
+    <div class="dash-num red">${suspCount}</div><div class="dash-lbl">Licenses suspended</div>
+  </div>
+</div>`;
+
+  if(nearLimit.length>0){
+    html+=`<div class="card"><p class="sec">Approaching suspension (4+ pts)</p>`;
+    nearLimit.forEach(p=>{
+      const t=totalPtsForPerson(p.oid);
+      html+=`<div class="warn-item">
+        <div class="warn-pts">${t}</div>
+        <div><div class="warn-name">${p.rank} ${p.first} ${p.last}</div>
+        <div class="warn-sub">${5-t} point(s) until suspension</div></div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  html+=`<div class="card"><p class="sec">Recent records</p>`;
+  if(recent.length===0){
+    html+=`<div class="empty" style="padding:16px">No records yet.</div>`;
+  } else {
+    recent.forEach(r=>{
+      const dot=r.susp?'red':totalPtsForPerson(r.oid)>=4?'amber':'green';
+      const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+      html+=`<div class="recent-item">
+        <div class="ri-dot ${dot}"></div>
+        <div class="ri-name">${r.rank} ${r.first} ${r.last}<br><span style="font-size:11px;color:var(--text2)">${r.vtype.slice(0,36)}</span></div>
+        <div class="ri-sub">${d}</div>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+
+  if(records.length>0){
+    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:2px">View all records →</button>`;
+  }
+
+  document.getElementById('page-dash').innerHTML=html;
+}
+
+// ─── NEW RECORD ───────────────────────────────────────────────────────────────
+function renderNew(){
+  let rankOpts='<option value="">Select rank...</option>';
+  NATO_RANKS.forEach(g=>{rankOpts+=`<optgroup label="${g.g}">`;g.ranks.forEach(r=>{rankOpts+=`<option>${r}</option>`;});rankOpts+='</optgroup>';});
+  let vD='<optgroup label="Driving violations">',vC='<optgroup label="Conduct violations">';
+  Object.entries(VIOLATIONS).forEach(([name,v])=>{
+    const lbl=v.suspend?' [LICENSE SUSPENDED]':v.pts>0?` [${v.pts} pt${v.pts>1?'s':''}]`:'';
+    const opt=`<option value="${name}">${name}${lbl}</option>`;
+    if(v.cat==='driving')vD+=opt;else vC+=opt;
+  });
+  vD+='</optgroup>';vC+='</optgroup>';
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  const dt=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('page-new').innerHTML=`
+<div class="card"><p class="sec">Violator details</p>
+  <div class="field"><label>NATO Rank</label><select id="f-rank">${rankOpts}</select></div>
   <div class="row2">
     <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off"/></div>
     <div class="field"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off"/></div>
   </div>
-  <div class="field"><label>Unit / NSE / Nation</label><input id="f-unit" placeholder="e.g. DEU NSE, POL NSE" autocomplete="off"/></div>
+  <div class="field"><label>Unit / NSE / Nation</label><input id="f-unit" placeholder="e.g. DEU NSE" autocomplete="off"/></div>
 </div>
-
-<div class="card">
-  <p class="section-title">Violation details</p>
+<div class="card"><p class="sec">Violation details</p>
   <div class="field"><label>Violation type</label>
-    <select id="f-vtype" onchange="onViolChange()">
-      <option value="">Select violation...</option>
-      ${vOptsDriving}${vOptsConduct}
-    </select>
+    <select id="f-vtype" onchange="onViolChange()"><option value="">Select violation...</option>${vD}${vC}</select>
   </div>
   <div id="v-hint"></div>
-  <div class="field" id="spd-wrap" style="display:none">
-    <label>Actual speed over limit (km/h)</label>
-    <input type="number" id="f-speed" min="1" max="200" placeholder="e.g. 15"/>
-  </div>
+  <div class="field" id="spd-wrap" style="display:none"><label>Speed over limit (km/h)</label><input type="number" id="f-speed" min="1" max="200" placeholder="e.g. 15"/></div>
   <div class="field"><label>Occurrence number</label>
-    <select id="f-occur">
-      <option value="1">1st violation</option>
-      <option value="2">2nd violation</option>
-      <option value="3">3rd violation or more</option>
-    </select>
+    <select id="f-occur"><option value="1">1st violation</option><option value="2">2nd violation</option><option value="3">3rd violation or more</option></select>
   </div>
-  <div class="field"><label>Location / notes</label>
-    <textarea id="f-notes" placeholder="Location, circumstances, witnesses..."></textarea>
-  </div>
+  <div class="field"><label>Location / notes</label><textarea id="f-notes" placeholder="Location, circumstances, witnesses..."></textarea></div>
   <div class="row2">
     <div class="field"><label>Reporting officer</label><input id="f-officer" placeholder="Your name" autocomplete="off"/></div>
-    <div class="field"><label>Date & time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
+    <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
   </div>
 </div>
-
-<div id="penalty-preview"></div>
 <button class="btn btn-primary" onclick="submitRecord()">Save violation record</button>
-<div style="height:8px"></div>
-`;
+<div style="height:8px"></div>`;
 }
 
-function onViolChange() {
-  const v = document.getElementById('f-vtype').value;
-  const hint = document.getElementById('v-hint');
-  const speedWrap = document.getElementById('spd-wrap');
-  const preview = document.getElementById('penalty-preview');
-
-  if (!v) { hint.innerHTML = ''; speedWrap.style.display = 'none'; preview.innerHTML = ''; return; }
-
-  const vdata = VIOLATIONS[v];
-  speedWrap.style.display = v.toLowerCase().includes('speeding') ? 'block' : 'none';
-
-  const notifyStr = (vdata.notify && vdata.notify.length) ? vdata.notify.join(', ') : '';
-  if (vdata.suspend) {
-    const dur = vdata.suspEOT ? 'until EOT (End of Tour)' : vdata.suspDays ? `for ${vdata.suspDays} days` : '';
-    hint.innerHTML = `<div class="status-suspended">LICENSE SUSPENDED ${dur}</div>`
-      + (notifyStr ? `<div class="status-warn" style="margin-top:4px;font-size:12px">Notify immediately: ${notifyStr}</div>` : '');
-  } else if (vdata.pts > 0) {
-    hint.innerHTML = `<span class="badge badge-amber">${vdata.pts} penalty point(s)</span>`
-      + (notifyStr ? `<div class="status-warn" style="margin-top:6px;font-size:12px">Notify: ${notifyStr}</div>` : '');
+function onViolChange(){
+  const v=document.getElementById('f-vtype').value;
+  const hint=document.getElementById('v-hint');
+  document.getElementById('spd-wrap').style.display=v.toLowerCase().includes('speeding')?'block':'none';
+  if(!v){hint.innerHTML='';return;}
+  const vd=VIOLATIONS[v],ns=(vd.notify&&vd.notify.length)?vd.notify.join(', '):'';
+  if(vd.suspend){
+    const dur=vd.suspEOT?'until EOT':vd.suspDays?`for ${vd.suspDays} days`:'';
+    hint.innerHTML=`<div class="s-susp">LICENSE SUSPENDED ${dur}</div>`+(ns?`<div class="s-warn" style="margin-top:4px;font-size:12px">Notify immediately: ${ns}</div>`:'');
+  } else if(vd.pts>0){
+    hint.innerHTML=`<span class="badge b-amber">${vd.pts} penalty point(s)</span>`+(ns?`<div class="s-warn" style="margin-top:6px;font-size:12px">Notify: ${ns}</div>`:'');
   } else {
-    hint.innerHTML = `<span class="badge badge-gray">Warning / disciplinary referral only</span>`
-      + (notifyStr ? `<div style="font-size:12px;color:var(--text2);margin-top:6px">Notify: ${notifyStr}</div>` : '');
+    hint.innerHTML=`<span class="badge b-gray">Warning / disciplinary only</span>`+(ns?`<div style="font-size:12px;color:var(--text2);margin-top:5px">Notify: ${ns}</div>`:'');
   }
-  preview.innerHTML = '';
 }
 
-function submitRecord() {
-  const rank   = document.getElementById('f-rank').value;
-  const first  = document.getElementById('f-first').value.trim();
-  const last   = document.getElementById('f-last').value.trim();
-  const unit   = document.getElementById('f-unit').value.trim();
-  const vtype  = document.getElementById('f-vtype').value;
-  const occur  = parseInt(document.getElementById('f-occur').value);
-  const notes  = document.getElementById('f-notes').value.trim();
-  const officer= document.getElementById('f-officer').value.trim();
-  const date   = document.getElementById('f-date').value;
-  const speedEl= document.getElementById('f-speed');
-  const speed  = speedEl ? speedEl.value : '';
-
-  if (!rank || !first || !last || !vtype) {
-    alert('Please fill in rank, name, and violation type.');
-    return;
+function submitRecord(){
+  const rank=document.getElementById('f-rank').value;
+  const first=document.getElementById('f-first').value.trim();
+  const last=document.getElementById('f-last').value.trim();
+  const unit=document.getElementById('f-unit').value.trim();
+  const vtype=document.getElementById('f-vtype').value;
+  const occur=parseInt(document.getElementById('f-occur').value);
+  const notes=document.getElementById('f-notes').value.trim();
+  const officer=document.getElementById('f-officer').value.trim();
+  const date=document.getElementById('f-date').value;
+  const speedEl=document.getElementById('f-speed');
+  const speed=speedEl?speedEl.value:'';
+  if(!rank||!first||!last||!vtype){alert('Please fill in rank, name, and violation type.');return;}
+  const vd=VIOLATIONS[vtype],pts=vd?vd.pts:0;
+  const oid=(first+'_'+last).toLowerCase().replace(/\s+/g,'_');
+  const newTotal=totalPtsForPerson(oid)+pts;
+  const susp=(vd&&vd.suspend)||newTotal>=5;
+  let suspDuration='',suspUntil='';
+  if(susp){
+    if(vd&&vd.suspEOT){suspDuration='Until EOT (End of Tour)';}
+    else if(newTotal>=5){suspDuration='1 month (5 penalty points)';const u=new Date();u.setMonth(u.getMonth()+1);suspUntil=u.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+    else if(vd&&vd.suspDays){suspDuration=`${vd.suspDays} days`;const u=new Date();u.setDate(u.getDate()+vd.suspDays);suspUntil=u.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
   }
-
-  const vdata = VIOLATIONS[vtype];
-  const pts = vdata ? vdata.pts : 0;
-  const oid = (first + '_' + last).toLowerCase().replace(/\s+/g,'_');
-  const newTotal = totalPtsForPerson(oid) + pts;
-  const susp = (vdata && vdata.suspend) || newTotal >= 5;
-
-  // Determine suspension duration
-  let suspDuration = '';
-  let suspUntil = '';
-  if (susp) {
-    if (vdata && vdata.suspEOT) {
-      suspDuration = 'Until EOT (End of Tour)';
-    } else if (newTotal >= 5) {
-      suspDuration = '1 month (5 penalty points accumulated)';
-      const until = new Date();
-      until.setMonth(until.getMonth() + 1);
-      suspUntil = until.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } else if (vdata && vdata.suspDays) {
-      suspDuration = `${vdata.suspDays} days`;
-      const until = new Date();
-      until.setDate(until.getDate() + vdata.suspDays);
-      suspUntil = until.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
-  }
-
-  const notify = (vdata && vdata.notify) ? vdata.notify : [];
-
-  const rec = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    rank, first, last, unit, vtype, occur, notes, officer,
-    date: date || new Date().toISOString(),
-    speed: speed || '',
-    pts, susp, suspDuration, suspUntil, notify, oid,
-    ts: Date.now()
-  };
-
-  records.unshift(rec);
-  saveData();
-
-  // Show confirmation with action required
-  let msg = '';
-  if (susp) {
-    msg = `Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil ? '\nUntil: ' + suspUntil : ''}\n\nNotify immediately:\n${notify.map(n => '• ' + n).join('\n')}`;
-  } else if (pts > 0) {
-    msg = `Record saved.\nPenalty points added: ${pts}\nTotal for ${first} ${last}: ${newTotal}/5`;
-    if (notify.length) msg += `\n\nNotify: ${notify.join(', ')}`;
-  } else {
-    msg = 'Record saved.';
-    if (notify.length) msg += `\n\nNotify: ${notify.join(', ')}`;
-  }
-  alert(msg);
-  renderNew();
+  const notify=(vd&&vd.notify)?vd.notify:[];
+  const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),rank,first,last,unit,vtype,occur,notes,officer,date:date||new Date().toISOString(),speed:speed||'',pts,susp,suspDuration,suspUntil,notify,oid,ts:Date.now()};
+  records.unshift(rec);saveData();
+  let msg='';
+  if(susp){msg=`Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil?'\nUntil: '+suspUntil:''}\n\nNotify immediately:\n${notify.map(n=>'• '+n).join('\n')}`;}
+  else if(pts>0){msg=`Record saved.\nPoints added: ${pts}\nTotal for ${first} ${last}: ${newTotal}/5`;if(notify.length)msg+=`\n\nNotify: ${notify.join(', ')}`;}
+  else{msg='Record saved.';if(notify.length)msg+=`\n\nNotify: ${notify.join(', ')}`;}
+  alert(msg);renderNew();
 }
 
 // ─── RECORDS PAGE ─────────────────────────────────────────────────────────────
-
-function renderRecords(filter) {
-  const s = (filter || '').toLowerCase();
-  const filtered = records.filter(r =>
-    !s || (r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s)
-  );
-  const suspCount = records.filter(r => r.susp).length;
-
-  let html = `
-<div class="summary-grid">
-  <div class="sc"><div class="sc-num">${records.length}</div><div class="sc-lbl">Total records</div></div>
-  <div class="sc"><div class="sc-num" style="color:var(--red)">${suspCount}</div><div class="sc-lbl">Licenses suspended</div></div>
+function renderRecords(){
+  document.getElementById('page-records').innerHTML=`
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-bar" id="search-input" placeholder="Search name, rank, unit..." oninput="onSearch(this.value)" value="${_searchFilter}"/>
+  </div>
+  <div class="view-btns">
+    <button class="vbtn ${_viewMode==='list'?'active':''}" onclick="setView('list')" title="List view">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+    </button>
+    <button class="vbtn ${_viewMode==='person'?'active':''}" onclick="setView('person')" title="By person">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
+  </div>
 </div>
-<div class="search-wrap">
-  <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-  <input class="search-bar" id="search-input" placeholder="Search name, rank, unit, violation..." oninput="liveSearch(this.value)" value="${filter||''}"/>
-</div>`;
-
-  html += '<div id="records-list">';
-  if (filtered.length === 0) {
-    html += `<div class="empty">${records.length === 0 ? 'No records yet. Add a new violation.' : 'No records match your search.'}</div>`;
-  } else {
-    filtered.forEach(r => {
-      html += buildRecordCard(r);
-    });
-  }
-  html += '</div>';
-
-  document.getElementById('page-records').innerHTML = html;
-  const si = document.getElementById('search-input');
-  if (si && filter) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
+<div class="filter-row">
+  <button class="fchip ${_filterMode==='all'?'active':''}" onclick="setFilter('all')">All</button>
+  <button class="fchip ${_filterMode==='suspended'?'active':''}" onclick="setFilter('suspended')">Suspended</button>
+  <button class="fchip ${_filterMode==='speeding'?'active':''}" onclick="setFilter('speeding')">Speeding</button>
+  <button class="fchip ${_filterMode==='driving'?'active':''}" onclick="setFilter('driving')">Driving</button>
+  <button class="fchip ${_filterMode==='conduct'?'active':''}" onclick="setFilter('conduct')">Conduct</button>
+</div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+  <select class="sort-sel" onchange="setSort(this.value)">
+    <option value="newest" ${_sortMode==='newest'?'selected':''}>Newest first</option>
+    <option value="oldest" ${_sortMode==='oldest'?'selected':''}>Oldest first</option>
+    <option value="name" ${_sortMode==='name'?'selected':''}>By last name</option>
+    <option value="pts" ${_sortMode==='pts'?'selected':''}>By penalty pts</option>
+  </select>
+</div>
+<div id="records-list"></div>`;
+  refreshList();
 }
 
-function buildRecordCard(r) {
-  const dateStr = new Date(r.date).toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
-  const tp = totalPtsForPerson(r.oid);
-  const warnLine = (tp >= 4 && !r.susp)
-    ? `<div class="status-warn" style="font-size:12px;margin-top:6px">Accumulated points: ${tp}/5 — approaching suspension threshold</div>` : '';
-  let html = `
-<div class="vc">
-  <div class="vc-header">
-    <div>
-      <div class="vc-name">${r.rank} ${r.first} ${r.last}</div>
-      <div class="vc-sub">${r.unit || '—'} &middot; ${dateStr}</div>
+function onSearch(v){_searchFilter=v;refreshList();}
+function setView(v){_viewMode=v;renderRecords();}
+function setFilter(f){_filterMode=f;refreshList();}
+function setSort(s){_sortMode=s;refreshList();}
+
+function getFilteredSorted(){
+  let res=[...records];
+  // search
+  const s=_searchFilter.toLowerCase();
+  if(s)res=res.filter(r=>(r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s));
+  // filter
+  if(_filterMode==='suspended')res=res.filter(r=>r.susp);
+  else if(_filterMode==='speeding')res=res.filter(r=>r.vtype.toLowerCase().includes('speeding'));
+  else if(_filterMode==='driving')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving');
+  else if(_filterMode==='conduct')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct');
+  // sort
+  if(_sortMode==='newest')res.sort((a,b)=>b.ts-a.ts);
+  else if(_sortMode==='oldest')res.sort((a,b)=>a.ts-b.ts);
+  else if(_sortMode==='name')res.sort((a,b)=>a.last.localeCompare(b.last));
+  else if(_sortMode==='pts')res.sort((a,b)=>totalPtsForPerson(b.oid)-totalPtsForPerson(a.oid));
+  return res;
+}
+
+function refreshList(){
+  const list=document.getElementById('records-list');
+  if(!list)return;
+  const filtered=getFilteredSorted();
+  if(filtered.length===0){list.innerHTML=`<div class="empty">${records.length===0?'No records yet.':'No records match your filters.'}</div>`;return;}
+  if(_viewMode==='list')list.innerHTML=filtered.map(r=>buildListItem(r)).join('');
+  else list.innerHTML=buildPersonView(filtered);
+}
+
+function buildListItem(r){
+  const dot=r.susp?'susp':totalPtsForPerson(r.oid)>=4?'warn':'ok';
+  const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const expanded=_expandedId===r.id;
+  let html=`<div class="lv-item" onclick="toggleExpand('${r.id}')">
+    <div class="lv-status ${dot}"></div>
+    <div class="lv-main">
+      <div class="lv-name">${r.rank} ${r.first} ${r.last}</div>
+      <div class="lv-vtype">${r.vtype}</div>
     </div>
-    <button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0" onclick="deleteRecord('${r.id}')">Delete</button>
-  </div>
-  <div><span class="badge badge-blue">${r.vtype}</span>${r.pts > 0 ? `<span class="badge badge-amber">${r.pts} pts</span>` : ''}</div>
-  ${r.speed ? `<p style="font-size:12px;color:var(--text2);margin-top:4px">Speed over limit: ${r.speed} km/h</p>` : ''}
-  ${r.notes ? `<p class="vc-notes">${r.notes}</p>` : ''}
-  ${warnLine}
-  <p class="vc-footer">Reported by: ${r.officer || '—'} &middot; Occurrence #${r.occur}</p>
-  ${r.susp
-    ? `<div class="status-suspended">LICENSE SUSPENDED</div>
-       <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--radius-sm);padding:9px 12px;margin-top:4px;font-size:12px;color:var(--red-text);line-height:1.7">
-         <strong>Duration:</strong> ${r.suspDuration || 'See SOP 3901'}<br>
-         ${r.suspUntil ? `<strong>Until:</strong> ${r.suspUntil}<br>` : ''}
-         <strong>Action:</strong> Confiscate driving permit. Report to IMP Station. File IMP Occurrence Report.
-       </div>`
-    : '<div class="status-ok">License valid</div>'}
-  <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-top:6px;font-size:12px;color:var(--text);line-height:1.8">
-    <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">IMP Action Required</p>
-    ${buildActionSteps(r)}
-  </div>
-</div>`;
+    <div class="lv-right">
+      <div class="lv-date">${d}</div>
+      ${r.pts>0?`<div class="lv-pts">${r.pts} pts</div>`:''}
+    </div>
+  </div>`;
+  if(expanded){
+    html+=`<div class="detail-panel">
+      <div style="margin-bottom:8px">
+        ${r.susp?`<div class="s-susp">LICENSE SUSPENDED — ${r.suspDuration||''}${r.suspUntil?' until '+r.suspUntil:''}</div>`:'<div class="s-ok">License valid</div>'}
+      </div>
+      ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px">Speed over limit: ${r.speed} km/h</p>`:''}
+      ${r.notes?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px;font-style:italic">${r.notes}</p>`:''}
+      <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Reported by: ${r.officer||'—'} · Occurrence #${r.occur} · ${new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+      <div class="action-box"><p class="lbl">IMP Action Required</p>${buildActionSteps(r)}</div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete record</button>
+      </div>
+    </div>`;
+  }
   return html;
 }
 
-let _searchFilter = '';
-function liveSearch(val) {
-  _searchFilter = val;
-  const list = document.getElementById('records-list');
-  if (!list) { renderRecords(val); return; }
-  const s = val.toLowerCase();
-  const filtered = records.filter(r =>
-    !s || (r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s)
-  );
-  if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty">No records match your search.</div>`;
-  } else {
-    list.innerHTML = filtered.map(r => buildRecordCard(r)).join('');
-  }
+function toggleExpand(id){
+  _expandedId=(_expandedId===id)?null:id;
+  refreshList();
+  // keep search focus
+  const si=document.getElementById('search-input');
+  if(si&&_searchFilter){si.focus();si.setSelectionRange(si.value.length,si.value.length);}
 }
 
-function deleteRecord(id) {
-  // Show PIN modal instead of confirm
-  showPINModal(id);
+function buildPersonView(filtered){
+  // group by oid
+  const groups={};
+  filtered.forEach(r=>{
+    if(!groups[r.oid])groups[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid,recs:[]};
+    groups[r.oid].recs.push(r);
+  });
+  // sort groups
+  let gList=Object.values(groups);
+  if(_sortMode==='name')gList.sort((a,b)=>a.last.localeCompare(b.last));
+  else if(_sortMode==='pts')gList.sort((a,b)=>totalPtsForPerson(b.oid)-totalPtsForPerson(a.oid));
+  else gList.sort((a,b)=>(b.recs[0].ts||0)-(a.recs[0].ts||0));
+
+  return gList.map(g=>{
+    const tp=totalPtsForPerson(g.oid);
+    const hasSusp=g.recs.some(r=>r.susp);
+    const cls=hasSusp?'susp':tp>=4?'warn':'ok';
+    const initials=(g.first[0]||'')+(g.last[0]||'');
+    const expanded=_expandedPerson===g.oid;
+    let html=`<div class="pv-card">
+      <div class="pv-header" onclick="togglePerson('${g.oid}')">
+        <div class="pv-avatar ${cls}">${initials}</div>
+        <div class="pv-info">
+          <div class="pv-name">${g.rank} ${g.first} ${g.last}</div>
+          <div class="pv-sub">${g.unit||'—'} · ${g.recs.length} violation${g.recs.length>1?'s':''}</div>
+          ${hasSusp?'<span class="badge b-red" style="margin-top:3px">Suspended</span>':tp>=4?'<span class="badge b-amber" style="margin-top:3px">'+tp+'/5 pts</span>':''}
+        </div>
+        <div>
+          <div class="pv-pts" style="color:${hasSusp?'var(--red)':tp>=4?'var(--amber)':'var(--text)'}">${tp}</div>
+          <div class="pv-ptslbl">pts total</div>
+        </div>
+      </div>`;
+    if(expanded){
+      html+=`<div class="pv-records">`;
+      g.recs.forEach(r=>{
+        const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+        html+=`<div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <span class="badge b-blue" style="font-size:11px">${r.vtype.slice(0,40)}</span>
+            <button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0;margin-left:6px" onclick="deleteRecord('${r.id}')">Del</button>
+          </div>
+          ${r.pts>0?`<span class="badge b-amber">${r.pts} pts</span>`:''}
+          ${r.susp?`<div class="s-susp" style="margin-top:5px">SUSPENDED — ${r.suspDuration}${r.suspUntil?' until '+r.suspUntil:''}</div>`:''}
+          ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-top:4px">Speed over: ${r.speed} km/h</p>`:''}
+          ${r.notes?`<p style="font-size:12px;color:var(--text2);font-style:italic;margin-top:3px">${r.notes}</p>`:''}
+          <p style="font-size:11px;color:var(--text3);margin-top:4px">${r.officer||'—'} · Occ. #${r.occur} · ${d}</p>
+          <div class="action-box" style="margin-top:6px"><p class="lbl">IMP Action</p>${buildActionSteps(r)}</div>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+    return html;
+  }).join('');
 }
 
-function showPINModal(recordId) {
-  const modal = document.getElementById('pin-modal');
-  if (modal) { modal.remove(); }
-  const m = document.createElement('div');
-  m.id = 'pin-modal';
-  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
-  m.innerHTML = `
-    <div style="background:var(--bg);border-radius:var(--radius);padding:24px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
-      <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Enter PIN to delete</p>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">This action cannot be undone.</p>
-      <input type="password" inputmode="numeric" id="pin-input" placeholder="Enter PIN" maxlength="8"
-        style="width:100%;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:18px;font-family:inherit;letter-spacing:4px;text-align:center;outline:none;margin-bottom:8px"
-        onkeydown="if(event.key==='Enter')confirmPINDelete('${recordId}')"/>
-      <div id="pin-error" style="font-size:12px;color:var(--red);min-height:18px;margin-bottom:10px;text-align:center"></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn" style="flex:1" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
-        <button class="btn btn-red" style="flex:1" onclick="confirmPINDelete('${recordId}')">Delete</button>
-      </div>
-    </div>`;
+function togglePerson(oid){_expandedPerson=(_expandedPerson===oid)?null:oid;refreshList();}
+
+// ─── DELETE WITH PIN ──────────────────────────────────────────────────────────
+function deleteRecord(id){showPINModal(id);}
+
+function showPINModal(recordId){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to delete</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">This action cannot be undone.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmPIN('${recordId}')"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmPIN('${recordId}')">Delete</button>
+    </div>
+  </div>`;
   document.body.appendChild(m);
-  setTimeout(() => { const i = document.getElementById('pin-input'); if(i) i.focus(); }, 50);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
 }
 
-function confirmPINDelete(id) {
-  const input = document.getElementById('pin-input');
-  const errEl = document.getElementById('pin-error');
-  const entered = input ? input.value : '';
-  if (entered === '2685') {
+function confirmPIN(id){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='2685'){
     document.getElementById('pin-modal').remove();
-    records = records.filter(r => r.id !== id);
+    records=records.filter(r=>r.id!==id);
     saveData();
-    renderRecords(_searchFilter);
+    if(_viewMode==='person')_expandedPerson=null;else _expandedId=null;
+    refreshList();
+    renderDash();
   } else {
-    if (errEl) errEl.textContent = 'Incorrect PIN. Try again.';
-    if (input) { input.value = ''; input.focus(); }
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
   }
 }
 
-// ─── QR SYNC PAGE ─────────────────────────────────────────────────────────────
+// ─── ACTION STEPS ─────────────────────────────────────────────────────────────
+function buildActionSteps(r){
+  const vd=VIOLATIONS[r.vtype]||{};
+  const steps=[];let n=1;
+  steps.push(`<b>${n++}.</b> File <b>IMP Occurrence Report</b> — record in IMP daily occurrence book.`);
+  if(r.susp){
+    steps.push(`<b>${n++}.</b> <b>Confiscate driving permit</b> immediately. Hand to IMP Station Commander.`);
+    if(vd.suspEOT)steps.push(`<b>${n++}.</b> Suspension: <b>until EOT</b> — no EUFOR/NATO vehicle operation.`);
+    else if(r.suspUntil)steps.push(`<b>${n++}.</b> Suspension: <b>${r.suspDuration}</b> (until ${r.suspUntil}).`);
+  }
+  if(r.notify&&r.notify.length)steps.push(`<b>${n++}.</b> Notify via IMP Report: <b>${r.notify.join(', ')}</b>.`);
+  if(vd.notify&&vd.notify.some(x=>x.includes('FPM')))steps.push(`<b>${n++}.</b> Submit copy to <b>FPM (Force Protection Manager)</b>.`);
+  if(vd.notify&&vd.notify.some(x=>x.includes('HQ CAMP CMDT')))steps.push(`<b>${n++}.</b> Forward to <b>HQ CAMP CMDT Operations Section</b>.`);
+  if(r.vtype.includes('alcohol')||r.vtype.includes('drugs'))steps.push(`<b>${n++}.</b> Escort to <b>IMP Station</b>. Decide if <b>Medical Cell</b> referral needed.`);
+  if(r.susp&&!vd.suspend)steps.push(`<b>${n++}.</b> 5-point threshold reached. Notify SNR, forward to HQ CAMP CMDT.`);
+  return steps.map(s=>`<div style="margin-bottom:2px">${s}</div>`).join('');
+}
 
-function renderQR() {
-  const selOpts = records.length === 0
-    ? '<option value="">No records available</option>'
-    : records.map((r, i) => {
-        const d = new Date(r.date).toLocaleDateString('en-GB');
-        return `<option value="${i}">${r.rank} ${r.first} ${r.last} — ${r.vtype.slice(0,30)} (${d})</option>`;
-      }).join('');
-
-  document.getElementById('page-qr').innerHTML = `
-<div class="card">
-  <p class="section-title">Generate QR — send a record</p>
-  <p class="hint" style="margin-bottom:12px">Select a violation record, generate a QR code, and show it to another officer who scans it with their phone. One record per QR code.</p>
-  <div class="field"><label>Select record to share</label>
-    <select class="rec-select" id="qr-select" size="5">${selOpts}</select>
-  </div>
+// ─── QR SYNC ──────────────────────────────────────────────────────────────────
+function renderQR(){
+  const selOpts=records.length===0?'<option value="">No records available</option>':records.map((r,i)=>{const d=new Date(r.date).toLocaleDateString('en-GB');return `<option value="${i}">${r.rank} ${r.first} ${r.last} — ${r.vtype.slice(0,30)} (${d})</option>`;}).join('');
+  document.getElementById('page-qr').innerHTML=`
+<div class="card"><p class="sec">Generate QR — send a record</p>
+  <p class="hint" style="margin-bottom:10px">Select a record, generate QR, show it to another officer to scan.</p>
+  <div class="field"><label>Select record</label><select class="rec-select" id="qr-select" size="5">${selOpts}</select></div>
   <button class="btn btn-primary" onclick="genQR()" ${records.length===0?'disabled':''}>Generate QR code</button>
-  <div id="qr-output" style="margin-top:14px"></div>
+  <div id="qr-output" style="margin-top:12px"></div>
 </div>
-
-<div class="card" style="margin-top:10px">
-  <p class="section-title">Scan QR — receive a record</p>
-  <p class="hint" style="margin-bottom:12px">Use your phone camera to scan a QR code from another officer's phone. The violation record will be imported instantly. Duplicate records are skipped automatically.</p>
+<div class="card" style="margin-top:10px"><p class="sec">Scan QR — receive a record</p>
+  <p class="hint" style="margin-bottom:10px">Scan a QR code from another officer's screen.</p>
   <div class="scan-area" id="scan-area">
-    <p>Camera will open here. Allow camera access when prompted.</p>
+    <p>Camera will open here.</p>
     <button class="btn btn-green" onclick="startScan()">Start camera scan</button>
   </div>
   <div id="scan-result"></div>
 </div>
-
-<div class="card" style="margin-top:10px">
-  <p class="section-title">Manual paste (fallback)</p>
-  <p class="hint" style="margin-bottom:10px">If camera is unavailable, the sender can copy the record text and send it via message. Paste it here to import.</p>
-  <div class="field"><textarea id="manual-paste" placeholder="Paste record JSON text here..."></textarea></div>
+<div class="card" style="margin-top:10px"><p class="sec">Manual paste (fallback)</p>
+  <p class="hint" style="margin-bottom:10px">Paste JSON text received from another officer.</p>
+  <div class="field"><textarea id="manual-paste" placeholder="Paste record JSON here..."></textarea></div>
   <button class="btn" onclick="manualImport()">Import pasted data</button>
   <div id="manual-result" style="margin-top:8px"></div>
-</div>
-`;
-}
-
-function genQR() {
-  const sel = document.getElementById('qr-select');
-  if (!sel || sel.selectedIndex < 0 || sel.value === '') { alert('Please select a record first.'); return; }
-  const rec = records[parseInt(sel.value)];
-  if (!rec) return;
-
-  const payload = JSON.stringify({ cbvt: 1, r: rec });
-  const output = document.getElementById('qr-output');
-
-  if (payload.length > 2953) {
-    output.innerHTML = `<div class="status-suspended">Record too large for QR code (${payload.length} chars). Shorten the notes field, or use JSON export from the Data tab.</div>`;
-    return;
-  }
-
-  window._lastQRPayload = payload;
-  output.innerHTML = '<div class="qr-outer"><div id="qr-canvas"></div><p class="qr-info">Show this QR code to another officer to scan.<br><strong>' + rec.rank + ' ' + rec.first + ' ' + rec.last + '</strong><br>' + rec.vtype + '</p></div>'
-    + '<div style="margin-top:12px"><p style="font-size:12px;color:var(--text2);margin-bottom:6px">Camera not working? Share as text instead:</p>'
-    + '<button class="btn" id="copy-btn" onclick="copyJSON()">Copy record as text</button>'
-    + '<div id="copy-result"></div></div>';
-
-  try {
-    new QRCode(document.getElementById('qr-canvas'), {
-      text: payload,
-      width: 240,
-      height: 240,
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) {
-    output.innerHTML = `<div class="status-suspended">QR library failed to load. Please check your internet connection and reload the page.</div>`;
-  }
-}
-
-function startScan() {
-  const area = document.getElementById('scan-area');
-  area.innerHTML = `
-    <p style="margin-bottom:10px">Choose how to scan the QR code:</p>
-    <button class="btn btn-green" style="margin-bottom:8px" onclick="startCameraScan()">Use camera (live)</button>
-    <button class="btn" onclick="startFileScan()">Take photo / pick from gallery</button>
-    <p style="font-size:11px;color:var(--text3);margin-top:10px">On iPhone: "Take photo" opens camera directly</p>
-  `;
-}
-
-function startCameraScan() {
-  const area = document.getElementById('scan-area');
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    area.innerHTML = `<p style="color:var(--red);margin-bottom:10px">Live camera not supported on this browser. Use "Take photo" option instead.</p><button class="btn btn-green" onclick="startScan()">Back</button>`;
-    return;
-  }
-  area.innerHTML = `
-    <video id="scan-video" autoplay playsinline muted style="width:100%;border-radius:var(--radius-sm);max-height:260px;object-fit:cover;display:block"></video>
-    <p style="font-size:12px;color:var(--text2);margin:8px 0">Point camera at the QR code...</p>
-    <button class="btn" onclick="stopScan();startScan()">Cancel</button>
-  `;
-  const constraints = {
-    video: {
-      facingMode: { ideal: 'environment' },
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
-    }
-  };
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then(stream => {
-      scanStream = stream;
-      const video = document.getElementById('scan-video');
-      if (!video) { stopScan(); return; }
-      video.srcObject = stream;
-      video.setAttribute('playsinline', true);
-      video.setAttribute('autoplay', true);
-      video.muted = true;
-      video.play().catch(() => {});
-      loadJsQR(() => startDecodeLoop(video));
-    })
-    .catch(err => {
-      let msg = 'Camera access denied.';
-      if (err.name === 'NotAllowedError') msg = 'Camera permission denied. Please allow camera access in your browser settings.';
-      else if (err.name === 'NotFoundError') msg = 'No camera found on this device.';
-      else if (err.name === 'NotReadableError') msg = 'Camera is already in use by another app.';
-      area.innerHTML = `<p style="color:var(--red);margin-bottom:10px">${msg}</p><button class="btn btn-green" onclick="startScan()">Back</button>`;
-    });
-}
-
-function startFileScan() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = 'environment';
-  input.style.display = 'none';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      const img = new Image();
-      img.onload = function() {
-        loadJsQR(() => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imgData.data, imgData.width, imgData.height);
-          if (code && code.data) {
-            try {
-              const parsed = JSON.parse(code.data);
-              if (parsed.cbvt && parsed.r) {
-                importSingleRecord(parsed.r);
-                document.getElementById('scan-area').innerHTML = '<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';
-              } else {
-                document.getElementById('scan-result').innerHTML = '<div class="status-suspended">QR code not from this app.</div>';
-              }
-            } catch(ex) {
-              document.getElementById('scan-result').innerHTML = '<div class="status-suspended">Could not read QR data from image.</div>';
-            }
-          } else {
-            document.getElementById('scan-result').innerHTML = '<div class="import-already">No QR code found in the image. Try again with a clearer photo.</div>';
-          }
-        });
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-    document.body.removeChild(input);
-  };
-  document.body.appendChild(input);
-  input.click();
-}
-
-function stopScan() {
-  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
-  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-}
-
-let jsQRLoaded = false;
-function loadJsQR(cb) {
-  if (typeof jsQR !== 'undefined') { jsQRLoaded = true; cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-  s.onload = () => { jsQRLoaded = true; cb(); };
-  s.onerror = () => {
-    const area = document.getElementById('scan-area');
-    if (area) area.innerHTML = '<p style="color:var(--red)">Could not load QR scanner. Check internet connection and reload.</p><button class="btn" style="margin-top:8px" onclick="startScan()">Retry</button>';
-  };
-  document.body.appendChild(s);
-}
-
-function startDecodeLoop(video) {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  let attempts = 0;
-  scanInterval = setInterval(() => {
-    if (!video) { stopScan(); return; }
-    if (!video.videoWidth) { attempts++; if (attempts > 100) stopScan(); return; }
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    try {
-      ctx.drawImage(video, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
-      if (code && code.data) {
-        stopScan();
-        try {
-          const parsed = JSON.parse(code.data);
-          if (parsed.cbvt && parsed.r) {
-            importSingleRecord(parsed.r);
-          } else {
-            document.getElementById('scan-result').innerHTML = '<div class="status-suspended">QR code not from this app.</div>';
-          }
-        } catch(e) {
-          document.getElementById('scan-result').innerHTML = '<div class="status-suspended">Could not parse QR data.</div>';
-        }
-        const area = document.getElementById('scan-area');
-        if (area) area.innerHTML = '<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';
-      }
-    } catch(e) {}
-  }, 250);
-}
-
-function manualImport() {
-  const txt = (document.getElementById('manual-paste').value || '').trim();
-  if (!txt) { alert('Please paste some data first.'); return; }
-  try {
-    const data = JSON.parse(txt);
-    const rec = data.cbvt ? data.r : (data.r || data);
-    importSingleRecord(rec, 'manual-result');
-  } catch(e) {
-    document.getElementById('manual-result').innerHTML = '<div class="status-suspended">Invalid JSON format. Please check the pasted data.</div>';
-  }
-}
-
-function importSingleRecord(rec, resultId) {
-  const target = resultId || 'scan-result';
-  if (!rec || !rec.id || !rec.first || !rec.vtype) {
-    document.getElementById(target).innerHTML = '<div class="status-suspended">Invalid record structure.</div>';
-    return;
-  }
-  if (records.find(r => r.id === rec.id)) {
-    document.getElementById(target).innerHTML = '<div class="import-already">This record already exists in your database. No duplicate added.</div>';
-    return;
-  }
-  records.unshift(rec);
-  saveData();
-  const dateStr = new Date(rec.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-  document.getElementById(target).innerHTML = `
-<div class="import-success">
-  <p style="font-weight:600;margin-bottom:4px">Record imported successfully</p>
-  <p>${rec.rank} ${rec.first} ${rec.last}</p>
-  <p>${rec.vtype} &middot; ${dateStr}</p>
-  ${rec.susp ? '<p style="color:var(--red-text);font-weight:600;margin-top:4px">License suspended</p>' : ''}
 </div>`;
 }
 
-// ─── DATA PAGE ────────────────────────────────────────────────────────────────
+function genQR(){
+  const sel=document.getElementById('qr-select');
+  if(!sel||sel.selectedIndex<0||sel.value===''){alert('Please select a record first.');return;}
+  const rec=records[parseInt(sel.value)];if(!rec)return;
+  const payload=JSON.stringify({cbvt:1,r:rec});
+  const output=document.getElementById('qr-output');
+  if(payload.length>2953){output.innerHTML=`<div class="s-susp">Record too large for QR. Shorten the notes, or use JSON export.</div>`;return;}
+  window._lastQRPayload=payload;
+  output.innerHTML='<div class="qr-outer"><div id="qr-canvas"></div><p class="qr-info">Show this QR to another officer.<br><b>'+rec.rank+' '+rec.first+' '+rec.last+'</b><br>'+rec.vtype+'</p></div>'
+    +'<div style="margin-top:10px"><p style="font-size:12px;color:var(--text2);margin-bottom:6px">Camera not working? Share as text:</p>'
+    +'<button class="btn" id="copy-btn" onclick="copyJSON()">Copy record as text</button><div id="copy-result"></div></div>';
+  try{new QRCode(document.getElementById('qr-canvas'),{text:payload,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){output.innerHTML=`<div class="s-susp">QR library not loaded. Check connection and reload.</div>`;}
+}
 
-function renderData() {
-  document.getElementById('page-data').innerHTML = `
-<div class="card">
-  <p class="section-title">Export all records</p>
-  <p class="hint" style="margin-bottom:12px">Save all records as a JSON file. Send it to another officer (email, WhatsApp, Bluetooth) who can import it below. This transfers all records at once.</p>
+function startScan(){
+  const area=document.getElementById('scan-area');
+  area.innerHTML=`<p style="margin-bottom:10px">Choose scan method:</p>
+    <button class="btn btn-green" style="margin-bottom:8px" onclick="startCameraScan()">Use camera (live)</button>
+    <button class="btn" onclick="startFileScan()">Take photo / gallery</button>
+    <p style="font-size:11px;color:var(--text3);margin-top:8px">On iPhone: "Take photo" opens camera directly</p>`;
+}
+function startCameraScan(){
+  const area=document.getElementById('scan-area');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){area.innerHTML=`<p style="color:var(--red);margin-bottom:10px">Live camera not supported. Use "Take photo" instead.</p><button class="btn btn-green" onclick="startScan()">Back</button>`;return;}
+  area.innerHTML=`<video id="scan-video" autoplay playsinline muted style="width:100%;border-radius:var(--rsm);max-height:260px;object-fit:cover;display:block"></video><p style="font-size:12px;color:var(--text2);margin:6px 0">Point camera at QR code...</p><button class="btn" onclick="stopScan();startScan()">Cancel</button>`;
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}})
+    .then(stream=>{scanStream=stream;const v=document.getElementById('scan-video');if(!v){stopScan();return;}v.srcObject=stream;v.setAttribute('playsinline',true);v.muted=true;v.play().catch(()=>{});loadJsQR(()=>startDecodeLoop(v));})
+    .catch(err=>{let msg='Camera access denied.';if(err.name==='NotAllowedError')msg='Permission denied. Allow camera in browser settings.';else if(err.name==='NotFoundError')msg='No camera found.';else if(err.name==='NotReadableError')msg='Camera in use by another app.';area.innerHTML=`<p style="color:var(--red);margin-bottom:10px">${msg}</p><button class="btn btn-green" onclick="startScan()">Back</button>`;});
+}
+function startFileScan(){
+  const input=document.createElement('input');input.type='file';input.accept='image/*';input.capture='environment';input.style.display='none';
+  input.onchange=function(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const img=new Image();
+      img.onload=function(){
+        loadJsQR(()=>{
+          const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+          const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code=jsQR(imgData.data,imgData.width,imgData.height);
+          if(code&&code.data){
+            try{const p=JSON.parse(code.data);if(p.cbvt&&p.r){importSingleRecord(p.r);document.getElementById('scan-area').innerHTML='<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';}
+            else document.getElementById('scan-result').innerHTML='<div class="s-susp">QR not from this app.</div>';}
+            catch(ex){document.getElementById('scan-result').innerHTML='<div class="s-susp">Could not read QR data.</div>';}
+          } else document.getElementById('scan-result').innerHTML='<div class="import-already">No QR found. Try a clearer photo.</div>';
+        });
+      };img.src=ev.target.result;
+    };reader.readAsDataURL(file);document.body.removeChild(input);
+  };document.body.appendChild(input);input.click();
+}
+function stopScan(){if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}if(scanInterval){clearInterval(scanInterval);scanInterval=null;}}
+let jsQRLoaded=false;
+function loadJsQR(cb){
+  if(typeof jsQR!=='undefined'){jsQRLoaded=true;cb();return;}
+  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+  s.onload=()=>{jsQRLoaded=true;cb();};
+  s.onerror=()=>{const a=document.getElementById('scan-area');if(a)a.innerHTML='<p style="color:var(--red)">Could not load scanner. Check connection.</p><button class="btn" onclick="startScan()">Retry</button>';};
+  document.body.appendChild(s);
+}
+function startDecodeLoop(video){
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');let att=0;
+  scanInterval=setInterval(()=>{
+    if(!video){stopScan();return;}if(!video.videoWidth){att++;if(att>100)stopScan();return;}
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    try{ctx.drawImage(video,0,0);const d=ctx.getImageData(0,0,canvas.width,canvas.height);const code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+      if(code&&code.data){stopScan();
+        try{const p=JSON.parse(code.data);if(p.cbvt&&p.r)importSingleRecord(p.r);else document.getElementById('scan-result').innerHTML='<div class="s-susp">QR not from this app.</div>';}
+        catch(e){document.getElementById('scan-result').innerHTML='<div class="s-susp">Could not parse QR data.</div>';}
+        const a=document.getElementById('scan-area');if(a)a.innerHTML='<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';
+      }
+    }catch(e){}
+  },250);
+}
+function manualImport(){
+  const txt=(document.getElementById('manual-paste').value||'').trim();
+  if(!txt){alert('Please paste some data first.');return;}
+  try{const d=JSON.parse(txt);importSingleRecord(d.cbvt?d.r:(d.r||d),'manual-result');}
+  catch(e){document.getElementById('manual-result').innerHTML='<div class="s-susp">Invalid JSON format.</div>';}
+}
+function importSingleRecord(rec,resultId){
+  const target=resultId||'scan-result';
+  const el=document.getElementById(target);
+  if(!rec||!rec.id||!rec.first||!rec.vtype){if(el)el.innerHTML='<div class="s-susp">Invalid record structure.</div>';return;}
+  if(records.find(r=>r.id===rec.id)){if(el)el.innerHTML='<div class="import-already">Record already exists. No duplicate added.</div>';return;}
+  records.unshift(rec);saveData();
+  const d=new Date(rec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600;margin-bottom:3px">Imported successfully</p><p>${rec.rank} ${rec.first} ${rec.last}</p><p>${rec.vtype} · ${d}</p>${rec.susp?'<p style="color:var(--red-text);font-weight:600;margin-top:3px">License suspended</p>':''}</div>`;
+}
+
+// ─── DATA PAGE ────────────────────────────────────────────────────────────────
+function renderData(){
+  document.getElementById('page-data').innerHTML=`
+<div class="card"><p class="sec">Export all records</p>
+  <p class="hint" style="margin-bottom:10px">Export as JSON file. Send via WhatsApp/email/AirDrop to another officer.</p>
   <button class="btn btn-primary" onclick="exportJSON()">Export all records as JSON</button>
 </div>
-
-<div class="card" style="margin-top:10px">
-  <p class="section-title">Import from JSON file</p>
-  <p class="hint" style="margin-bottom:12px">Import records from another officer's export. Duplicate records are skipped automatically.</p>
-  <div class="field">
-    <label>Select JSON file</label>
-    <input type="file" id="import-file" accept=".json" style="font-size:13px;color:var(--text2);padding:6px 0"/>
-  </div>
+<div class="card" style="margin-top:10px"><p class="sec">Import from JSON file</p>
+  <p class="hint" style="margin-bottom:10px">Import from another officer's export. Duplicates skipped.</p>
+  <div class="field"><label>Select JSON file</label><input type="file" id="import-file" accept=".json" style="font-size:13px;color:var(--text2);padding:6px 0"/></div>
   <button class="btn" onclick="importJSON()">Import selected file</button>
   <div id="import-result" style="margin-top:8px"></div>
 </div>
-
-<div class="card" style="margin-top:10px">
-  <p class="section-title">Database info</p>
-  <p class="hint">Total records stored: <strong>${records.length}</strong><br>
-  Estimated storage: <strong>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</strong><br>
-  Data is stored in your browser's local storage (offline, private).</p>
+<div class="card" style="margin-top:10px"><p class="sec">Database info</p>
+  <p class="hint">Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b><br>Data is stored locally on this device only.</p>
 </div>
-
-<div class="card" style="margin-top:10px;border-color:var(--red)">
-  <p class="section-title" style="color:var(--red)">Danger zone</p>
-  <p class="hint" style="margin-bottom:12px">Permanently delete all locally stored violation records. Export first if you need a backup.</p>
+<div class="card" style="margin-top:10px;border-color:var(--red)"><p class="sec" style="color:var(--red)">Danger zone</p>
+  <p class="hint" style="margin-bottom:10px">Permanently delete all locally stored records. Export first.</p>
   <button class="btn btn-red" onclick="clearAll()">Delete all records</button>
-</div>
-`;
+</div>`;
 }
-
-function exportJSON() {
-  if (records.length === 0) { alert('No records to export.'); return; }
-  const payload = JSON.stringify({ cbvt: 1, exported: new Date().toISOString(), count: records.length, records }, null, 2);
-  const blob = new Blob([payload], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'violations_' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+function exportJSON(){
+  if(records.length===0){alert('No records to export.');return;}
+  const blob=new Blob([JSON.stringify({cbvt:1,exported:new Date().toISOString(),count:records.length,records},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='violations_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
-
-function importJSON() {
-  const file = document.getElementById('import-file').files[0];
-  if (!file) { alert('Please select a JSON file first.'); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const imported = data.records || (Array.isArray(data) ? data : [data]);
-      const existing = new Set(records.map(r => r.id));
-      let added = 0;
-      imported.forEach(r => {
-        if (r && r.id && !existing.has(r.id)) { records.push(r); added++; }
-      });
-      records.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-      saveData();
-      document.getElementById('import-result').innerHTML = `<div class="import-success"><p style="font-weight:600">${added} new record(s) imported.</p><p>${imported.length - added} duplicate(s) skipped.</p></div>`;
+function importJSON(){
+  const file=document.getElementById('import-file').files[0];
+  if(!file){alert('Please select a JSON file first.');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      const imported=data.records||(Array.isArray(data)?data:[data]);
+      const existing=new Set(records.map(r=>r.id));
+      let added=0;
+      imported.forEach(r=>{if(r&&r.id&&!existing.has(r.id)){records.push(r);added++;}});
+      records.sort((a,b)=>(b.ts||0)-(a.ts||0));saveData();
+      document.getElementById('import-result').innerHTML=`<div class="import-success"><p style="font-weight:600">${added} new record(s) imported.</p><p>${imported.length-added} duplicate(s) skipped.</p></div>`;
       renderData();
-    } catch(ex) {
-      document.getElementById('import-result').innerHTML = '<div class="status-suspended">Invalid file format. Please select a valid JSON export file.</div>';
-    }
-  };
-  reader.readAsText(file);
+    }catch(ex){document.getElementById('import-result').innerHTML='<div class="s-susp">Invalid file format.</div>';}
+  };reader.readAsText(file);
+}
+function clearAll(){
+  if(records.length===0){alert('No records to delete.');return;}
+  if(!confirm(`Delete ALL ${records.length} record(s)? This cannot be undone.`))return;
+  records=[];saveData();alert('All records deleted.');renderData();
 }
 
-function clearAll() {
-  if (records.length === 0) { alert('No records to delete.'); return; }
-  const confirmed = confirm(`Delete ALL ${records.length} record(s)? This cannot be undone.\n\nType OK to confirm.`);
-  if (!confirmed) return;
-  records = [];
-  saveData();
-  alert('All records deleted.');
-  renderData();
+// ─── COPY JSON ────────────────────────────────────────────────────────────────
+function copyJSON(){
+  const payload=window._lastQRPayload;if(!payload){alert('No record selected.');return;}
+  const btn=document.getElementById('copy-btn'),result=document.getElementById('copy-result');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(payload).then(()=>{if(btn)btn.textContent='Copied!';if(result)result.innerHTML='<p style="font-size:12px;color:var(--green-text);margin-top:6px">Copied. Send via WhatsApp/SMS. Recipient pastes in Manual paste field.</p>';setTimeout(()=>{if(btn)btn.textContent='Copy record as text';},3000);}).catch(()=>showTextFallback(payload,result));
+  } else showTextFallback(payload,result);
 }
-
-// ─── ACTION STEPS BUILDER ────────────────────────────────────────────────────
-function buildActionSteps(r) {
-  const vdata = VIOLATIONS[r.vtype] || {};
-  const steps = [];
-  let n = 1;
-
-  // Step 1: IMP Occurrence Report — always
-  steps.push(`<span style="font-weight:600">${n++}.</span> File <strong>IMP Occurrence Report</strong> — record violation in IMP daily occurrence book.`);
-
-  // Step 2: License / driving
-  if (r.susp) {
-    steps.push(`<span style="font-weight:600">${n++}.</span> <strong>Confiscate driving permit</strong> immediately. Hand to IMP Station Commander.`);
-    if (vdata.suspEOT) {
-      steps.push(`<span style="font-weight:600">${n++}.</span> Suspension period: <strong>until EOT</strong> — violator may not operate any EUFOR/NATO vehicle.`);
-    } else if (r.suspUntil) {
-      steps.push(`<span style="font-weight:600">${n++}.</span> Suspension period: <strong>${r.suspDuration}</strong> (until ${r.suspUntil}).`);
-    }
-  }
-
-  // Step 3: Who to notify and how
-  if (r.notify && r.notify.length) {
-    const notifyList = r.notify.map(x => `<strong>${x}</strong>`).join(', ');
-    steps.push(`<span style="font-weight:600">${n++}.</span> Notify via <strong>IMP Report</strong>: ${notifyList}.`);
-  }
-
-  // Step 4: FPM reporting
-  if (vdata.notify && vdata.notify.some(x => x.includes('FPM'))) {
-    steps.push(`<span style="font-weight:600">${n++}.</span> Submit report copy to <strong>FPM (Force Protection Manager)</strong>.`);
-  }
-
-  // Step 5: HQ CAMP CMDT
-  if (vdata.notify && vdata.notify.some(x => x.includes('HQ CAMP CMDT'))) {
-    steps.push(`<span style="font-weight:600">${n++}.</span> Forward report to <strong>HQ CAMP CMDT Operations Section</strong>.`);
-  }
-
-  // Step 6: Alcohol — medical cell
-  if (r.vtype.includes('alcohol') || r.vtype.includes('drugs')) {
-    steps.push(`<span style="font-weight:600">${n++}.</span> Escort violator to <strong>IMP Station</strong>. IMP decides if <strong>Medical Cell</strong> referral required.`);
-  }
-
-  // Step 7: 5-point suspension
-  if (r.susp && !vdata.suspend) {
-    steps.push(`<span style="font-weight:600">${n++}.</span> 5-point threshold reached — suspension <strong>1 month</strong>. Notify SNR and forward to HQ CAMP CMDT.`);
-  }
-
-  return steps.map(s => `<div style="margin-bottom:2px">${s}</div>`).join('');
-}
-
-// ─── COPY JSON ───────────────────────────────────────────────────────────────
-function copyJSON() {
-  const payload = window._lastQRPayload;
-  if (!payload) { alert('No record selected.'); return; }
-  const btn = document.getElementById('copy-btn');
-  const result = document.getElementById('copy-result');
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(payload)
-      .then(() => {
-        if (btn) btn.textContent = 'Copied!';
-        if (result) result.innerHTML = '<p style="font-size:12px;color:var(--green);margin-top:6px">Text copied to clipboard. Now paste it in WhatsApp/SMS/email to the other officer, who pastes it in the Manual paste field.</p>';
-        setTimeout(() => { if (btn) btn.textContent = 'Copy record as text'; }, 3000);
-      })
-      .catch(() => showTextFallback(payload, result));
-  } else {
-    showTextFallback(payload, result);
-  }
-}
-
-function showTextFallback(payload, result) {
-  if (result) result.innerHTML = '<p style="font-size:12px;color:var(--text2);margin-top:8px;margin-bottom:6px">Select all text below and copy manually:</p>'
-    + '<textarea style="width:100%;height:80px;font-size:11px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:monospace" readonly onclick="this.select()">'
-    + payload.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
+function showTextFallback(payload,result){
+  if(result)result.innerHTML='<p style="font-size:12px;color:var(--text2);margin-top:8px;margin-bottom:6px">Select all and copy:</p><textarea style="width:100%;height:80px;font-size:11px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-family:monospace" readonly onclick="this.select()">'+payload+'</textarea>';
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-loadData();
-renderNew();
+loadData();setPage('dash');
 </script>
 </body>
 </html>
