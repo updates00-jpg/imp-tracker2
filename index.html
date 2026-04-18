@@ -781,22 +781,43 @@ function importJSON(mode){
   };reader.readAsText(file);
 }
 
+function normalizeRecord(r){
+  // Fill in missing fields from older app versions
+  if(!r.suspDuration)r.suspDuration='';
+  if(!r.suspUntil)r.suspUntil='';
+  if(!r.notify){
+    const vd=VIOLATIONS[r.vtype];
+    r.notify=(vd&&vd.notify)?vd.notify:[];
+  }
+  if(r.susp===undefined)r.susp=false;
+  if(!r.pts)r.pts=0;
+  if(!r.ts)r.ts=new Date(r.date||Date.now()).getTime();
+  if(!r.oid)r.oid=(r.first+'_'+r.last).toLowerCase().replace(/\s+/g,'_');
+  return r;
+}
+
 function applyImport(imported,mode,resultId){
   const el=document.getElementById(resultId);
+  // Accept any record that has at minimum id + first/last name OR vtype
+  const valid=imported.filter(r=>r&&r.id&&(r.first||r.vtype)).map(normalizeRecord);
+  const invalid=imported.length-valid.length;
+  if(valid.length===0){
+    if(el)el.innerHTML='<div class="s-susp">No valid records found in the data.</div>';
+    return;
+  }
   if(mode==='replace'){
     if(!confirm('Replace ALL your local records with the received data? Your current records will be deleted.'))return;
-    records=imported.filter(r=>r&&r.id&&r.first&&r.vtype);
+    records=valid;
     records.sort((a,b)=>(b.ts||0)-(a.ts||0));
     saveData();
-    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">Database replaced.</p><p>${records.length} records loaded.</p></div>`;
-    renderData();
-    renderDash();
+    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">Database replaced.</p><p>${records.length} records loaded.${invalid>0?' '+invalid+' incomplete record(s) skipped.':''}</p></div>`;
+    renderData();renderDash();
   } else {
     const existing=new Set(records.map(r=>r.id));
     let added=0;
-    imported.forEach(r=>{if(r&&r.id&&!existing.has(r.id)){records.push(r);added++;}});
+    valid.forEach(r=>{if(!existing.has(r.id)){records.push(r);added++;}});
     records.sort((a,b)=>(b.ts||0)-(a.ts||0));saveData();
-    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">${added} new record(s) added.</p><p>${imported.length-added} duplicate(s) skipped.</p></div>`;
+    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">${added} new record(s) added.</p><p>${valid.length-added} duplicate(s) skipped.${invalid>0?' '+invalid+' incomplete skipped.':''}</p></div>`;
     renderData();
   }
 }
