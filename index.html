@@ -220,8 +220,61 @@ function saveData(){try{localStorage.setItem('cbvt_v3',JSON.stringify(records));
 function totalPtsForPerson(oid){return records.filter(r=>r.oid===oid).reduce((s,r)=>s+(r.pts||0),0);}
 
 function occurrenceCount(oid, vtype){
-  // Count how many times this person has had THIS specific violation type recorded
   return records.filter(r=>r.oid===oid && r.vtype===vtype).length;
+}
+
+function getPersonTimeline(oid){
+  // Returns all records for this person sorted chronologically (oldest first)
+  return records.filter(r=>r.oid===oid).sort((a,b)=>(a.ts||0)-(b.ts||0));
+}
+
+function getLicenseStatusAt(recordId){
+  // Calculate license status dynamically at the moment a specific record was created
+  // Returns {suspended, pts, reason, suspendedFrom}
+  const rec = records.find(r=>r.id===recordId);
+  if(!rec) return {suspended:false, pts:0, reason:''};
+
+  const timeline = getPersonTimeline(rec.oid);
+  let runningPts = 0;
+  let suspended = false;
+  let suspendedFrom = null;
+  let reason = '';
+
+  for(const r of timeline){
+    const vd = VIOLATIONS[r.vtype]||{};
+    // Check mandatory suspension (alcohol, damage)
+    if(vd.suspend){
+      if(!suspended){ suspended=true; suspendedFrom=r.id; reason='mandatory'; }
+    }
+    // Add penalty points
+    runningPts += (r.pts||0);
+    // Check 5-point threshold
+    if(runningPts>=5 && !suspended){
+      suspended=true; suspendedFrom=r.id; reason='5pts';
+    }
+    // Stop when we reach the record we're evaluating
+    if(r.id===recordId) break;
+  }
+
+  return {
+    suspended,
+    pts: runningPts,
+    reason,
+    suspendedFrom,
+    isThresholdRecord: suspendedFrom===recordId
+  };
+}
+
+function isPersonCurrentlySuspended(oid){
+  const timeline = getPersonTimeline(oid);
+  let pts=0, suspended=false;
+  for(const r of timeline){
+    const vd=VIOLATIONS[r.vtype]||{};
+    if(vd.suspend) suspended=true;
+    pts+=(r.pts||0);
+    if(pts>=5) suspended=true;
+  }
+  return suspended;
 }
 
 function getActionForOccurrence(vtype, occNum){
@@ -255,11 +308,13 @@ function setPage(p){
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDash(){
-  const suspCount=records.filter(r=>r.susp).length;
+  // Get unique suspended people (dynamic check)
+  const uniqueOids=[...new Set(records.map(r=>r.oid))];
+  const suspCount=uniqueOids.filter(oid=>isPersonCurrentlySuspended(oid)).length;
   // People approaching 5pts (4pts, not yet suspended)
   const people={};
   records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,oid:r.oid};});
-  const nearLimit=Object.values(people).filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!records.find(r=>r.oid===p.oid&&r.susp);});
+  const nearLimit=Object.values(people).filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!isPersonCurrentlySuspended(p.oid);});
   const recent=records.slice(0,3);
   const total=records.length;
 
@@ -291,7 +346,7 @@ function renderDash(){
     html+=`<div class="empty" style="padding:16px">No records yet.</div>`;
   } else {
     recent.forEach(r=>{
-      const dot=r.susp?'red':totalPtsForPerson(r.oid)>=4?'amber':'green';
+      const dot=isPersonCurrentlySuspended(r.oid)?'red':totalPtsForPerson(r.oid)>=4?'amber':'green';
       const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
       html+=`<div class="recent-item">
         <div class="ri-dot ${dot}"></div>
@@ -495,7 +550,7 @@ function showPersonBanner(p){
   if(!banner)return;
   const tp=totalPtsForPerson(p.oid);
   const recs=records.filter(r=>r.oid===p.oid);
-  const susp=recs.some(r=>r.susp);
+  const susp=isPersonCurrentlySuspended(p.oid);
   const lastRec=recs[0];
   const lastDate=lastRec?new Date(lastRec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
 
@@ -554,7 +609,9 @@ function submitRecord(){
   const vd=VIOLATIONS[vtype],pts=vd?vd.pts:0;
   const oid=(first+'_'+last).toLowerCase().replace(/\s+/g,'_');
   const newTotal=totalPtsForPerson(oid)+pts;
-  const susp=(vd&&vd.suspend)||newTotal>=5;
+  // susp=true only if THIS record is the one that triggers suspension
+  const prevTotal=totalPtsForPerson(oid); // points BEFORE this record
+  const susp=(vd&&vd.suspend)||(prevTotal<5&&newTotal>=5)||(vd&&vd.suspend);
   let suspDuration='',suspUntil='';
   if(susp){
     if(vd&&vd.suspEOT){suspDuration='Until EOT (End of Tour)';}
@@ -627,7 +684,7 @@ function getFilteredSorted(){
   const s=_searchFilter.toLowerCase();
   if(s)res=res.filter(r=>(r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s));
   // filter
-  if(_filterMode==='suspended')res=res.filter(r=>r.susp);
+  if(_filterMode==='suspended')res=res.filter(r=>isPersonCurrentlySuspended(r.oid));
   else if(_filterMode==='speeding')res=res.filter(r=>r.vtype.toLowerCase().includes('speeding'));
   else if(_filterMode==='driving')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving');
   else if(_filterMode==='conduct')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct');
@@ -648,8 +705,41 @@ function refreshList(){
   else list.innerHTML=buildPersonView(filtered);
 }
 
+function buildLicenseStatusBlock(r){
+  const status = getLicenseStatusAt(r.id);
+  const vd = VIOLATIONS[r.vtype]||{};
+
+  if(status.suspended){
+    // Find suspension details
+    let dur='', until='';
+    if(vd.suspend && vd.suspEOT){ dur='Until EOT (End of Tour)'; }
+    else if(vd.suspend && vd.suspDays){ dur=`${vd.suspDays} days`; }
+    else if(status.reason==='5pts'){ dur='1 month (5 penalty points)'; }
+    // Use stored suspUntil if available
+    if(r.suspUntil) until=r.suspUntil;
+
+    const label = status.isThresholdRecord
+      ? `LICENSE SUSPENDED — ${dur||''}${until?' until '+until:''}`
+      : `LICENSE SUSPENDED (carry-over)`;
+    const subLabel = status.isThresholdRecord
+      ? (status.reason==='5pts'
+          ? `5-point threshold reached at this record (${status.pts} pts total)`
+          : `Mandatory suspension — ${dur}`)
+      : `Suspended due to earlier violation`;
+    return `<div class="s-susp">${label}</div>
+      <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--rsm);padding:6px 11px;margin-top:3px;font-size:11px;color:var(--red-text)">${subLabel}</div>`;
+  } else {
+    const ptsAtTime = status.pts;
+    const remaining = 5 - ptsAtTime;
+    if(ptsAtTime>=4){
+      return `<div class="s-warn">License valid — ${ptsAtTime}/5 pts at time of record (${remaining} pt${remaining!==1?'s':''} until suspension)</div>`;
+    }
+    return `<div class="s-ok">License valid — ${ptsAtTime}/5 pts at time of record</div>`;
+  }
+}
+
 function buildListItem(r){
-  const dot=r.susp?'susp':totalPtsForPerson(r.oid)>=4?'warn':'ok';
+  const dot=isPersonCurrentlySuspended(r.oid)?'susp':totalPtsForPerson(r.oid)>=4?'warn':'ok';
   const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   const expanded=_expandedId===r.id;
   let html=`<div class="lv-item" onclick="toggleExpand('${r.id}')">
@@ -666,7 +756,7 @@ function buildListItem(r){
   if(expanded){
     html+=`<div class="detail-panel">
       <div style="margin-bottom:8px">
-        ${r.susp?`<div class="s-susp">LICENSE SUSPENDED — ${r.suspDuration||''}${r.suspUntil?' until '+r.suspUntil:''}</div>`:'<div class="s-ok">License valid</div>'}
+        ${buildLicenseStatusBlock(r)}
       </div>
       ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px">Speed over limit: ${r.speed} km/h</p>`:''}
       ${r.notes?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px;font-style:italic">${r.notes}</p>`:''}
@@ -704,7 +794,7 @@ function buildPersonView(filtered){
 
   return gList.map(g=>{
     const tp=totalPtsForPerson(g.oid);
-    const hasSusp=g.recs.some(r=>r.susp);
+    const hasSusp=isPersonCurrentlySuspended(g.oid);
     const cls=hasSusp?'susp':tp>=4?'warn':'ok';
     const initials=(g.first[0]||'')+(g.last[0]||'');
     const expanded=_expandedPerson===g.oid;
@@ -714,10 +804,10 @@ function buildPersonView(filtered){
         <div class="pv-info">
           <div class="pv-name">${g.rank} ${g.first} ${g.last}</div>
           <div class="pv-sub">${g.unit||'—'} · ${g.recs.length} violation${g.recs.length>1?'s':''}</div>
-          ${hasSusp?'<span class="badge b-red" style="margin-top:3px">Suspended</span>':tp>=4?'<span class="badge b-amber" style="margin-top:3px">'+tp+'/5 pts</span>':''}
+          ${hasSusp?'<span class="badge b-red" style="margin-top:3px">Suspended</span>':tp>=4?'<span class="badge b-amber" style="margin-top:3px">'+tp+'/5 pts — near limit</span>':''}
         </div>
         <div>
-          <div class="pv-pts" style="color:${hasSusp?'var(--red)':tp>=4?'var(--amber)':'var(--text)'}">${tp}</div>
+          <div class="pv-pts" style="color:${hasSusp?'var(--red)':tp>=4?'var(--amber)':'var(--blue)'}">${tp}</div>
           <div class="pv-ptslbl">pts total</div>
         </div>
       </div>`;
@@ -731,7 +821,7 @@ function buildPersonView(filtered){
             <button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0;margin-left:6px" onclick="deleteRecord('${r.id}')">Del</button>
           </div>
           ${r.pts>0?`<span class="badge b-amber">${r.pts} pts</span>`:''}
-          ${r.susp?`<div class="s-susp" style="margin-top:5px">SUSPENDED — ${r.suspDuration}${r.suspUntil?' until '+r.suspUntil:''}</div>`:''}
+          <div style="margin-top:5px">${buildLicenseStatusBlock(r)}</div>
           ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-top:4px">Speed over: ${r.speed} km/h</p>`:''}
           ${r.notes?`<p style="font-size:12px;color:var(--text2);font-style:italic;margin-top:3px">${r.notes}</p>`:''}
           <p style="font-size:11px;color:var(--text3);margin-top:4px">${r.officer||'—'} · Occ. #${r.occur} · ${d}</p>
@@ -793,7 +883,8 @@ function buildActionSteps(r){
   const steps=[];let n=1;
   const snrFrom=vd.snrFrom||1;
   const occNum=r.occur||1;
-  const requiresSNR = r.susp || (occNum>=snrFrom);
+  const dynStatus = getLicenseStatusAt(r.id);
+  const requiresSNR = dynStatus.suspended || (occNum>=snrFrom);
 
   // Step 1: always file occurrence report
   steps.push(`<b>${n++}.</b> File <b>IMP Occurrence Report</b> — record in IMP daily occurrence book.`);
@@ -803,8 +894,8 @@ function buildActionSteps(r){
     steps.push(`<b>${n++}.</b> <b>Confiscate driving permit</b> immediately. Hand to IMP Station Commander.`);
     if(vd.suspEOT) steps.push(`<b>${n++}.</b> Suspension: <b>until EOT</b> — violator may not operate any EUFOR/NATO vehicle.`);
     else if(r.suspUntil) steps.push(`<b>${n++}.</b> Suspension: <b>${r.suspDuration}</b> (until ${r.suspUntil}).`);
-  } else if(r.susp && !vd.suspend){
-    steps.push(`<b>${n++}.</b> <b>5-point threshold reached</b> — confiscate driving permit. Suspension: <b>${r.suspDuration||'1 month'}</b>${r.suspUntil?' (until '+r.suspUntil+')':''}.`);
+  } else if(dynStatus.suspended && dynStatus.isThresholdRecord){
+    steps.push(`<b>${n++}.</b> <b>5-point threshold reached</b> — confiscate driving permit. Suspension: <b>1 month</b>${r.suspUntil?' (until '+r.suspUntil+')':''}.`);
   } else if(requiresSNR){
     steps.push(`<b>${n++}.</b> Occurrence #${occNum} — <b>SNR/Branch Chief notification required</b> (threshold: from #${snrFrom}).`);
   } else {
