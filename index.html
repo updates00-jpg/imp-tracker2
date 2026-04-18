@@ -453,7 +453,8 @@ function buildListItem(r){
       ${r.notes?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px;font-style:italic">${r.notes}</p>`:''}
       <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Reported by: ${r.officer||'—'} · Occurrence #${r.occur} · ${new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
       <div class="action-box"><p class="lbl">IMP Action Required</p>${buildActionSteps(r)}</div>
-      <div style="margin-top:10px;text-align:right">
+      <div style="margin-top:10px;display:flex;justify-content:space-between">
+        <button class="btn btn-sm" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();_expandedId='${r.id}';generatePDFReport('single')">Print record</button>
         <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete record</button>
       </div>
     </div>`;
@@ -706,7 +707,13 @@ function importSingleRecord(rec,resultId){
 // ─── DATA PAGE ────────────────────────────────────────────────────────────────
 function renderData(){
   document.getElementById('page-data').innerHTML=`
-<div class="card"><p class="sec">Export / share all records</p>
+<div class="card"><p class="sec">PDF reports</p>
+  <p class="hint" style="margin-bottom:10px">Generate a formatted PDF report. Opens as a download. Requires internet connection once to load PDF library.</p>
+  <button class="btn btn-primary" onclick="generatePDFReport('all')" style="margin-bottom:8px">Full report — all records</button>
+  <button class="btn" onclick="generatePDFReport('suspended')" style="margin-bottom:8px">Suspended licenses only</button>
+  <p style="font-size:11px;color:var(--text3);margin-top:2px">To print a single record: open it in Records tab, then use "Print record" button.</p>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Export / share all records</p>
   <p class="hint" style="margin-bottom:10px">Export as JSON file, or copy as text to paste directly into WhatsApp.</p>
   <button class="btn btn-primary" onclick="exportJSON()" style="margin-bottom:8px">Export as JSON file</button>
   <button class="btn" onclick="copyAllJSON()">Copy all records as text (for WhatsApp)</button>
@@ -837,6 +844,157 @@ function copyJSON(){
 }
 function showTextFallback(payload,result){
   if(result)result.innerHTML='<p style="font-size:12px;color:var(--text2);margin-top:8px;margin-bottom:6px">Select all and copy:</p><textarea style="width:100%;height:80px;font-size:11px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-family:monospace" readonly onclick="this.select()">'+payload+'</textarea>';
+}
+
+// ─── PDF REPORT ──────────────────────────────────────────────────────────────
+function loadJsPDF(cb){
+  if(typeof window.jspdf!=='undefined'){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload=()=>cb();
+  s.onerror=()=>alert('Could not load PDF library. Check internet connection.');
+  document.body.appendChild(s);
+}
+
+function generatePDFReport(type){
+  // type: 'all', 'suspended', 'single' (uses _expandedId)
+  loadJsPDF(()=>{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw=210,ph=297,ml=15,mr=15,mt=20,cw=pw-ml-mr;
+    let y=mt;
+    const now=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    function checkPage(needed){if(y+needed>ph-15){doc.addPage();y=mt;drawHeader();}}
+    function drawHeader(){
+      doc.setFillColor(24,95,165);doc.rect(0,0,pw,12,'F');
+      doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
+      doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml,8);
+      doc.text('HQ EUFOR / NHQ Sa — Camp Butmir IMP Tracker',pw-mr,8,{align:'right'});
+      doc.setTextColor(0,0,0);
+    }
+    function hline(yy,r,g,b){doc.setDrawColor(r||200,g||200,b||200);doc.line(ml,yy,pw-mr,yy);}
+    function badge(txt,x,yy,bgR,bgG,bgB,txtR,txtG,txtB){
+      doc.setFillColor(bgR,bgG,bgB);
+      const tw=doc.getTextWidth(txt)+4;
+      doc.roundedRect(x,yy-4,tw,5.5,1,1,'F');
+      doc.setTextColor(txtR,txtG,txtB);doc.setFontSize(7);doc.setFont('helvetica','bold');
+      doc.text(txt,x+2,yy);
+      doc.setTextColor(0,0,0);
+      return tw+2;
+    }
+
+    drawHeader();
+
+    // Title
+    y=20;
+    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
+    const titles={'all':'Violation Records — Full Report','suspended':'Suspended Licenses Report','single':'Individual Violation Record'};
+    doc.text(titles[type]||'Violation Report',ml,y);y+=6;
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+    doc.text('Generated: '+now+' | SOP 3901 — HQ Camp Commandant',ml,y);y+=3;
+    hline(y);y+=5;
+
+    // Summary stats
+    if(type!=='single'){
+      const susp=records.filter(r=>r.susp).length;
+      const pts=records.reduce((s,r)=>s+(r.pts||0),0);
+      doc.setFillColor(245,245,243);doc.rect(ml,y,cw,16,'F');
+      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+      doc.text('Total records',ml+4,y+5);doc.text('Suspended',ml+40,y+5);doc.text('Total penalty pts',ml+80,y+5);doc.text('Report type',ml+130,y+5);
+      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+      doc.text(String(records.length),ml+4,y+13);
+      doc.setTextColor(163,45,45);doc.text(String(susp),ml+40,y+13);
+      doc.setTextColor(133,79,11);doc.text(String(pts),ml+80,y+13);
+      doc.setTextColor(24,95,165);doc.text(type==='suspended'?'Suspended only':'All records',ml+130,y+13);
+      doc.setTextColor(0,0,0);
+      y+=22;
+    }
+
+    // Get records to print
+    let recs=[];
+    if(type==='all')recs=[...records].sort((a,b)=>b.ts-a.ts);
+    else if(type==='suspended')recs=records.filter(r=>r.susp).sort((a,b)=>b.ts-a.ts);
+    else if(type==='single'){recs=_expandedId?records.filter(r=>r.id===_expandedId):[];}
+
+    if(recs.length===0){
+      doc.setFontSize(10);doc.text('No records to display.',ml,y);
+    }
+
+    recs.forEach((r,idx)=>{
+      const cardH=r.susp?52:40;
+      checkPage(cardH+6);
+
+      // Record box
+      const boxColor=r.susp?[252,235,235]:idx%2===0?[255,255,255]:[250,250,248];
+      doc.setFillColor(...boxColor);
+      doc.setDrawColor(r.susp?163:220,r.susp?45:220,r.susp?45:220);
+      doc.roundedRect(ml,y,cw,cardH,2,2,'FD');
+
+      // Left bar accent
+      doc.setFillColor(r.susp?163:24,r.susp?45:95,r.susp?45:165);
+      doc.rect(ml,y,2,cardH,'F');
+
+      const x=ml+5,x2=ml+105;
+      let ry=y+6;
+
+      // Name + rank
+      doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+      doc.text(`${r.rank} ${r.first} ${r.last}`,x,ry);
+
+      // Date top right
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+      const dstr=new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      doc.text(dstr,pw-mr-2,ry,{align:'right'});
+      ry+=5;
+
+      // Unit + officer
+      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+      doc.text(`Unit: ${r.unit||'—'}   |   Reported by: ${r.officer||'—'}   |   Occurrence: #${r.occur}`,x,ry);
+      ry+=5;
+
+      // Violation type
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
+      const vtxt=r.vtype.length>70?r.vtype.slice(0,68)+'...':r.vtype;
+      doc.text(vtxt,x,ry);ry+=5;
+
+      // Badges row
+      let bx=x;
+      if(r.pts>0)bx+=badge(`${r.pts} PTS`,bx,ry,250,237,192,133,79,11);
+      if(r.susp)bx+=badge('SUSPENDED',bx,ry,252,235,235,163,45,45);
+      if(r.speed)bx+=badge(`${r.speed} km/h over`,bx,ry,230,230,230,60,60,60);
+      ry+=7;
+
+      if(r.susp){
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(163,45,45);
+        doc.text(`Suspension: ${r.suspDuration||''}${r.suspUntil?' — until '+r.suspUntil:''}`,x,ry);ry+=4.5;
+        doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+        const nl=(r.notify&&r.notify.length)?r.notify.join(', '):'—';
+        doc.text(`Notify: ${nl}`,x,ry);ry+=4.5;
+      }
+
+      if(r.notes){
+        doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(100,100,100);
+        const nlines=doc.splitTextToSize(`Notes: ${r.notes}`,cw-10);
+        doc.text(nlines[0]+(nlines.length>1?'…':''),x,ry);
+      }
+
+      y+=cardH+4;
+    });
+
+    // Footer on each page
+    const totalPages=doc.internal.getNumberOfPages();
+    for(let i=1;i<=totalPages;i++){
+      doc.setPage(i);
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,150,150);
+      doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml,ph-8);
+      doc.text(`Page ${i} of ${totalPages}`,pw-mr,ph-8,{align:'right'});
+      doc.text('HQ EUFOR / NHQ Sa — Camp Butmir — SOP 3901',pw/2,ph-8,{align:'center'});
+    }
+
+    const fname=`IMP_Report_${type}_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(fname);
+  });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
