@@ -184,26 +184,31 @@ const NATO_RANKS=[
   {g:'Civilian',ranks:['CIV (Civilian)']}
 ];
 const VIOLATIONS={
-  'Speeding 5-10 km/h over limit':{pts:1,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)']},
-  'Speeding 11-20 km/h over limit':{pts:2,cat:'driving',suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
-  'Speeding 21+ km/h over limit':{pts:3,cat:'driving',suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
-  'Parking in front of Bldg 200 / circle':{pts:3,cat:'driving',notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
-  'Parking violation':{pts:0,cat:'driving',notify:['SNR/Branch Chief (3rd violation+)']},
-  'Smoking in NATO/EUFOR vehicle':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
-  'Failure to fasten seatbelt':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)']},
-  'Using cellphone during driving':{pts:2,cat:'driving',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
-  'Operating vehicle under alcohol/drugs':{pts:0,cat:'driving',suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
-  'Causing damage to EUFOR/NATO vehicle':{pts:0,cat:'driving',suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
-  'Failure to report to IMP':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
-  'Uncooperative behaviour to IMP':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
-  'Dress prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
-  'Alcohol prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
-  'Weapon carry prescription violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief','FPM']},
-  'Pedestrian violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)']},
-  'Bicycle/scooter violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)']},
-  'Quiet hours violation':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']},
-  'Not carrying ID card (visible place)':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (3rd violation+)','FPM']},
-  'Not carrying ID card in Camp Butmir':{pts:0,cat:'conduct',notify:['SNR/Branch Chief (2nd violation+)','FPM']}
+  // cat: driving/conduct | pts: penalty points per occurrence
+  // snrFrom: occurrence number from which SNR must be notified
+  // noPts: no penalty points apply (pedestrians, cyclists)
+  // suspend: mandatory license suspension
+  // suspDays / suspEOT: suspension duration
+  'Speeding 5-10 km/h over limit':         {pts:1,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Speeding 11-20 km/h over limit':        {pts:2,cat:'driving',snrFrom:1,suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Speeding 21+ km/h over limit':          {pts:3,cat:'driving',snrFrom:1,suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking in front of Bldg 200 / circle': {pts:3,cat:'driving',snrFrom:1,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking violation':                      {pts:0,cat:'driving',snrFrom:3,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Smoking in NATO/EUFOR vehicle':         {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Failure to fasten seatbelt':            {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief']},
+  'Using cellphone during driving':        {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Operating vehicle under alcohol/drugs': {pts:0,cat:'driving',snrFrom:1,suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Causing damage to EUFOR/NATO vehicle':  {pts:0,cat:'driving',snrFrom:1,suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Failure to report to IMP':              {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Uncooperative behaviour to IMP':        {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Dress prescription violation':          {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Alcohol prescription violation':        {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Weapon carry prescription violation':   {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Pedestrian violation':                  {pts:0,cat:'conduct',noPts:true,snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Bicycle/scooter violation':             {pts:0,cat:'conduct',noPts:true,snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Quiet hours violation':                 {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Not carrying ID card (visible place)':  {pts:0,cat:'conduct',snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Not carrying ID card in Camp Butmir':   {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']}
 };
 
 let records=[];
@@ -213,6 +218,25 @@ let _searchFilter='',_sortMode='newest',_filterMode='all',_viewMode='list',_expa
 function loadData(){try{const d=localStorage.getItem('cbvt_v3');if(d)records=JSON.parse(d);}catch(e){}}
 function saveData(){try{localStorage.setItem('cbvt_v3',JSON.stringify(records));}catch(e){}}
 function totalPtsForPerson(oid){return records.filter(r=>r.oid===oid).reduce((s,r)=>s+(r.pts||0),0);}
+
+function occurrenceCount(oid, vtype){
+  // Count how many times this person has had THIS specific violation type recorded
+  return records.filter(r=>r.oid===oid && r.vtype===vtype).length;
+}
+
+function getActionForOccurrence(vtype, occNum){
+  // Returns {action, notifySNR, isSNR} based on violation type and occurrence number
+  const vd=VIOLATIONS[vtype];
+  if(!vd)return{action:'File IMP Occurrence Report.',notifySNR:false};
+  const isSNR = occNum >= (vd.snrFrom||1);
+  if(vd.suspend){
+    return{action:'LICENSE SUSPENDED. Confiscate driving permit immediately.',notifySNR:true,isSNR:true};
+  }
+  if(isSNR){
+    return{action:`Occurrence #${occNum} — Notify SNR/Branch Chief. File IMP Report.`,notifySNR:true,isSNR:true};
+  }
+  return{action:`Occurrence #${occNum} — IMP warning only. File IMP Occurrence Report.`,notifySNR:false,isSNR:false};
+}
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 function setPage(p){
@@ -302,8 +326,8 @@ function renderNew(){
 <div class="card"><p class="sec">Violator details</p>
   <div class="field"><label>NATO Rank</label><select id="f-rank">${rankOpts}</select></div>
   <div class="row2">
-    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput()"/></div>
-    <div class="field ac-wrap"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off" oninput="onNameInput()" onfocus="onNameInput()"/>
+    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()"/></div>
+    <div class="field ac-wrap"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()" onfocus="onNameInput()"/>
       <div id="ac-dropdown" class="ac-dropdown" style="display:none"></div>
     </div>
   </div>
@@ -316,9 +340,8 @@ function renderNew(){
   </div>
   <div id="v-hint"></div>
   <div class="field" id="spd-wrap" style="display:none"><label>Speed over limit (km/h)</label><input type="number" id="f-speed" min="1" max="200" placeholder="e.g. 15"/></div>
-  <div class="field"><label>Occurrence number</label>
-    <select id="f-occur"><option value="1">1st violation</option><option value="2">2nd violation</option><option value="3">3rd violation or more</option></select>
-  </div>
+  <div id="occurrence-box"></div>
+  <div class="field" style="display:none"><select id="f-occur"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
   <div class="field"><label>Location / notes</label><textarea id="f-notes" placeholder="Location, circumstances, witnesses..."></textarea></div>
   <div class="row2">
     <div class="field"><label>Reporting officer</label><input id="f-officer" placeholder="Your name" autocomplete="off"/></div>
@@ -333,16 +356,75 @@ function onViolChange(){
   const v=document.getElementById('f-vtype').value;
   const hint=document.getElementById('v-hint');
   document.getElementById('spd-wrap').style.display=v.toLowerCase().includes('speeding')?'block':'none';
-  if(!v){hint.innerHTML='';return;}
-  const vd=VIOLATIONS[v],ns=(vd.notify&&vd.notify.length)?vd.notify.join(', '):'';
+  if(!v){hint.innerHTML='';updateOccurrenceBox();return;}
+  const vd=VIOLATIONS[v];
+  const ns=(vd.notify&&vd.notify.length)?vd.notify.join(', '):'';
+  let hhtml='';
   if(vd.suspend){
     const dur=vd.suspEOT?'until EOT':vd.suspDays?`for ${vd.suspDays} days`:'';
-    hint.innerHTML=`<div class="s-susp">LICENSE SUSPENDED ${dur}</div>`+(ns?`<div class="s-warn" style="margin-top:4px;font-size:12px">Notify immediately: ${ns}</div>`:'');
+    hhtml=`<div class="s-susp">LICENSE SUSPENDED ${dur}</div>`;
+  } else if(vd.noPts){
+    hhtml=`<span class="badge b-gray">No penalty points (pedestrian/cyclist)</span>`;
   } else if(vd.pts>0){
-    hint.innerHTML=`<span class="badge b-amber">${vd.pts} penalty point(s)</span>`+(ns?`<div class="s-warn" style="margin-top:6px;font-size:12px">Notify: ${ns}</div>`:'');
+    hhtml=`<span class="badge b-amber">${vd.pts} penalty point(s) per occurrence</span>`;
   } else {
-    hint.innerHTML=`<span class="badge b-gray">Warning / disciplinary only</span>`+(ns?`<div style="font-size:12px;color:var(--text2);margin-top:5px">Notify: ${ns}</div>`:'');
+    hhtml=`<span class="badge b-gray">Warning / disciplinary only</span>`;
   }
+  hint.innerHTML=hhtml;
+  updateOccurrenceBox();
+}
+
+function updateOccurrenceBox(){
+  const box=document.getElementById('occurrence-box');
+  const occurSel=document.getElementById('f-occur');
+  if(!box)return;
+  const first=document.getElementById('f-first').value.trim();
+  const last=document.getElementById('f-last').value.trim();
+  const vtype=document.getElementById('f-vtype').value;
+  if(!vtype){box.innerHTML='';return;}
+  const vd=VIOLATIONS[vtype];
+  const oid=(first+'_'+last).toLowerCase().replace(/\s+/g,'_');
+  // Count previous occurrences of this specific violation type for this person
+  const prevCount = (first&&last) ? occurrenceCount(oid, vtype) : 0;
+  const thisOccur = prevCount + 1;
+  // Set hidden select value
+  if(occurSel)occurSel.value=Math.min(thisOccur,5);
+  // Previous records of this type
+  const prevRecs=records.filter(r=>r.oid===oid&&r.vtype===vtype).slice(0,3);
+  const action=getActionForOccurrence(vtype, thisOccur);
+  const snrFrom=vd.snrFrom||1;
+  let cls=action.isSNR?'danger':'info';
+  if(vd.suspend)cls='danger';
+  let html=`<div class="person-banner ${cls}" style="margin-bottom:10px">`;
+  html+=`<div class="pb-title">`;
+  if(vd.suspend){
+    html+=`🚫 This violation requires immediate license suspension`;
+  } else if(action.isSNR){
+    html+=`⚠ Occurrence #${thisOccur} for this violation type — SNR notification required`;
+  } else {
+    html+=`ℹ Occurrence #${thisOccur} for this violation type — IMP warning`;
+  }
+  html+=`</div>`;
+  if(first&&last){
+    if(prevCount===0){
+      html+=`<div>No previous records of this violation for ${first} ${last}.</div>`;
+    } else {
+      html+=`<div>Previous occurrences of this type for ${first} ${last}: <b>${prevCount}</b></div>`;
+      if(prevRecs.length>0){
+        prevRecs.forEach(r=>{
+          const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+          html+=`<div style="font-size:11px;margin-top:2px">→ ${d} · Occ.#${r.occur} · ${r.officer||'—'}</div>`;
+        });
+      }
+    }
+    if(thisOccur<snrFrom){
+      html+=`<div style="margin-top:3px;font-size:12px">SNR notification required from occurrence #${snrFrom}.</div>`;
+    }
+  } else {
+    html+=`<div style="font-size:12px">Enter person's name to auto-calculate occurrence number.</div>`;
+  }
+  html+=`</div>`;
+  box.innerHTML=html;
 }
 
 function onNameInput(){
@@ -417,18 +499,36 @@ function showPersonBanner(p){
   const lastRec=recs[0];
   const lastDate=lastRec?new Date(lastRec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
 
+  // Build per-violation-type breakdown
+  const vtypeCounts={};
+  recs.forEach(r=>{vtypeCounts[r.vtype]=(vtypeCounts[r.vtype]||0)+1;});
+
   let cls='info',icon='ℹ';
   if(susp){cls='danger';icon='🚫';}
   else if(tp>=4){cls='warn';icon='⚠';}
   else if(recs.length>0){cls='warn';icon='⚠';}
 
+  let breakdownHtml='';
+  Object.entries(vtypeCounts).forEach(([vt,cnt])=>{
+    const vd=VIOLATIONS[vt]||{};
+    const snrFrom=vd.snrFrom||1;
+    const nextOccur=cnt+1;
+    const nextIsSnr=nextOccur>=snrFrom;
+    const statusDot=nextIsSnr?'🔴':'🟡';
+    breakdownHtml+=`<div style="font-size:11px;margin-top:3px">${statusDot} <b>${vt.slice(0,40)}</b>: ${cnt}x recorded — next (#${nextOccur}) ${nextIsSnr?'→ <b>SNR notification</b>':'→ warning'}</div>`;
+  });
+
   banner.innerHTML=`<div class="person-banner ${cls}">
     <div class="pb-title">${icon} ${p.rank} ${p.first} ${p.last} — already in database</div>
     <div>${recs.length} violation${recs.length>1?'s':''} on record · ${tp} penalty point${tp!==1?'s':''} · Last: ${lastDate}</div>
-    ${susp?'<div style="font-weight:600;margin-top:3px">LICENSE CURRENTLY SUSPENDED</div>':''}
-    ${tp>=4&&!susp?'<div style="font-weight:600;margin-top:3px">Warning: '+tp+'/5 points — approaching suspension</div>':''}
-    <div style="margin-top:6px"><button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';renderRecords();setTimeout(()=>{const si=document.getElementById('search-input');if(si){si.value='${p.first} ${p.last}';}},100)">View all records for this person →</button></div>
+    ${susp?'<div style="font-weight:600;margin-top:4px">🚫 LICENSE CURRENTLY SUSPENDED</div>':''}
+    ${tp>=4&&!susp?'<div style="font-weight:600;margin-top:3px">⚠ '+tp+'/5 points — approaching suspension</div>':''}
+    ${breakdownHtml?'<div style="margin-top:6px;padding-top:6px;border-top:0.5px solid rgba(0,0,0,.1)"><b style="font-size:11px">Per-violation history:</b>'+breakdownHtml+'</div>':''}
+    <div style="margin-top:8px"><button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';renderRecords();setTimeout(()=>{const si=document.getElementById('search-input');if(si){si.value='${p.first} ${p.last}';}},100)">View all records for this person →</button></div>
   </div>`;
+
+  // Also update occurrence box now that we have person context
+  updateOccurrenceBox();
 }
 
 // Close dropdown when clicking outside
@@ -443,7 +543,8 @@ function submitRecord(){
   const last=document.getElementById('f-last').value.trim();
   const unit=document.getElementById('f-unit').value.trim();
   const vtype=document.getElementById('f-vtype').value;
-  const occur=parseInt(document.getElementById('f-occur').value);
+  const occurSel=document.getElementById('f-occur');
+  const occur=occurSel?parseInt(occurSel.value)||1:1;
   const notes=document.getElementById('f-notes').value.trim();
   const officer=document.getElementById('f-officer').value.trim();
   const date=document.getElementById('f-date').value;
@@ -463,10 +564,19 @@ function submitRecord(){
   const notify=(vd&&vd.notify)?vd.notify:[];
   const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),rank,first,last,unit,vtype,occur,notes,officer,date:date||new Date().toISOString(),speed:speed||'',pts,susp,suspDuration,suspUntil,notify,oid,ts:Date.now()};
   records.unshift(rec);saveData();
+  const action=getActionForOccurrence(vtype,occur);
   let msg='';
-  if(susp){msg=`Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil?'\nUntil: '+suspUntil:''}\n\nNotify immediately:\n${notify.map(n=>'• '+n).join('\n')}`;}
-  else if(pts>0){msg=`Record saved.\nPoints added: ${pts}\nTotal for ${first} ${last}: ${newTotal}/5`;if(notify.length)msg+=`\n\nNotify: ${notify.join(', ')}`;}
-  else{msg='Record saved.';if(notify.length)msg+=`\n\nNotify: ${notify.join(', ')}`;}
+  if(susp){
+    msg=`Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil?'\nUntil: '+suspUntil:''}\n\nNotify immediately:\n${notify.map(n=>'• '+n).join('\n')}`;
+  } else if(action.isSNR){
+    msg=`Record saved.\n\nOccurrence #${occur} — SNR NOTIFICATION REQUIRED\n${notify.length?'Notify: '+notify.join(', '):''}`;
+    if(pts>0)msg+=`\nPenalty points added: ${pts} (total: ${newTotal}/5)`;
+  } else {
+    msg=`Record saved.\n\nOccurrence #${occur} — IMP WARNING ONLY`;
+    if(pts>0)msg+=`\nPenalty points added: ${pts} (total: ${newTotal}/5)`;
+    const vdl=VIOLATIONS[vtype];
+    if(vdl&&vdl.snrFrom)msg+=`\n(SNR notification required from occurrence #${vdl.snrFrom})`;
+  }
   alert(msg);renderNew();
 }
 
@@ -681,17 +791,51 @@ function confirmPIN(id){
 function buildActionSteps(r){
   const vd=VIOLATIONS[r.vtype]||{};
   const steps=[];let n=1;
+  const snrFrom=vd.snrFrom||1;
+  const occNum=r.occur||1;
+  const requiresSNR = r.susp || (occNum>=snrFrom);
+
+  // Step 1: always file occurrence report
   steps.push(`<b>${n++}.</b> File <b>IMP Occurrence Report</b> — record in IMP daily occurrence book.`);
-  if(r.susp){
+
+  // Step 2: occurrence-specific action
+  if(vd.suspend){
     steps.push(`<b>${n++}.</b> <b>Confiscate driving permit</b> immediately. Hand to IMP Station Commander.`);
-    if(vd.suspEOT)steps.push(`<b>${n++}.</b> Suspension: <b>until EOT</b> — no EUFOR/NATO vehicle operation.`);
-    else if(r.suspUntil)steps.push(`<b>${n++}.</b> Suspension: <b>${r.suspDuration}</b> (until ${r.suspUntil}).`);
+    if(vd.suspEOT) steps.push(`<b>${n++}.</b> Suspension: <b>until EOT</b> — violator may not operate any EUFOR/NATO vehicle.`);
+    else if(r.suspUntil) steps.push(`<b>${n++}.</b> Suspension: <b>${r.suspDuration}</b> (until ${r.suspUntil}).`);
+  } else if(r.susp && !vd.suspend){
+    steps.push(`<b>${n++}.</b> <b>5-point threshold reached</b> — confiscate driving permit. Suspension: <b>${r.suspDuration||'1 month'}</b>${r.suspUntil?' (until '+r.suspUntil+')':''}.`);
+  } else if(requiresSNR){
+    steps.push(`<b>${n++}.</b> Occurrence #${occNum} — <b>SNR/Branch Chief notification required</b> (threshold: from #${snrFrom}).`);
+  } else {
+    steps.push(`<b>${n++}.</b> Occurrence #${occNum} — <b>IMP warning issued</b>. SNR notification from occurrence #${snrFrom}.`);
   }
-  if(r.notify&&r.notify.length)steps.push(`<b>${n++}.</b> Notify via IMP Report: <b>${r.notify.join(', ')}</b>.`);
-  if(vd.notify&&vd.notify.some(x=>x.includes('FPM')))steps.push(`<b>${n++}.</b> Submit copy to <b>FPM (Force Protection Manager)</b>.`);
-  if(vd.notify&&vd.notify.some(x=>x.includes('HQ CAMP CMDT')))steps.push(`<b>${n++}.</b> Forward to <b>HQ CAMP CMDT Operations Section</b>.`);
-  if(r.vtype.includes('alcohol')||r.vtype.includes('drugs'))steps.push(`<b>${n++}.</b> Escort to <b>IMP Station</b>. Decide if <b>Medical Cell</b> referral needed.`);
-  if(r.susp&&!vd.suspend)steps.push(`<b>${n++}.</b> 5-point threshold reached. Notify SNR, forward to HQ CAMP CMDT.`);
+
+  // Step 3: no penalty points note for pedestrians/cyclists
+  if(vd.noPts){
+    steps.push(`<b>${n++}.</b> <b>No penalty points</b> apply — pedestrian/cyclist violation uses warning ladder only.`);
+  }
+
+  // Step 4: who to notify
+  if(requiresSNR && vd.notify && vd.notify.length){
+    steps.push(`<b>${n++}.</b> Notify via IMP Report: <b>${vd.notify.join(', ')}</b>.`);
+  }
+
+  // Step 5: FPM
+  if(requiresSNR && vd.notify && vd.notify.some(x=>x.includes('FPM'))){
+    steps.push(`<b>${n++}.</b> Submit copy to <b>FPM (Force Protection Manager)</b>.`);
+  }
+
+  // Step 6: HQ CAMP CMDT
+  if(requiresSNR && vd.notify && vd.notify.some(x=>x.includes('HQ CAMP CMDT'))){
+    steps.push(`<b>${n++}.</b> Forward to <b>HQ CAMP CMDT Operations Section</b>.`);
+  }
+
+  // Step 7: alcohol — medical cell
+  if(r.vtype.includes('alcohol')||r.vtype.includes('drugs')){
+    steps.push(`<b>${n++}.</b> Escort to <b>IMP Station</b>. Decide if <b>Medical Cell</b> referral needed.`);
+  }
+
   return steps.map(s=>`<div style="margin-bottom:2px">${s}</div>`).join('');
 }
 
