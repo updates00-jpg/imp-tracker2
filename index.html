@@ -239,26 +239,26 @@ const NATO_RANKS = [
 ];
 
 const VIOLATIONS = {
-  'Speeding 5-10 km/h over limit':          { pts: 1, cat: 'driving' },
-  'Speeding 11-20 km/h over limit':         { pts: 2, cat: 'driving' },
-  'Speeding 21+ km/h over limit':           { pts: 3, cat: 'driving' },
-  'Parking in front of Bldg 200 / circle':  { pts: 3, cat: 'driving' },
-  'Parking violation':                       { pts: 0, cat: 'driving' },
-  'Smoking in NATO/EUFOR vehicle':          { pts: 2, cat: 'driving' },
-  'Failure to fasten seatbelt':             { pts: 2, cat: 'driving' },
-  'Using cellphone during driving':         { pts: 2, cat: 'driving' },
-  'Operating vehicle under alcohol/drugs':  { pts: 0, cat: 'driving', suspend: true },
-  'Causing damage to EUFOR/NATO vehicle':   { pts: 0, cat: 'driving', suspend: true },
-  'Failure to report to IMP':               { pts: 0, cat: 'conduct' },
-  'Uncooperative behaviour to IMP':         { pts: 0, cat: 'conduct' },
-  'Dress prescription violation':           { pts: 0, cat: 'conduct' },
-  'Alcohol prescription violation':         { pts: 0, cat: 'conduct' },
-  'Weapon carry prescription violation':    { pts: 0, cat: 'conduct' },
-  'Pedestrian violation':                   { pts: 0, cat: 'conduct' },
-  'Bicycle/scooter violation':              { pts: 0, cat: 'conduct' },
-  'Quiet hours violation':                  { pts: 0, cat: 'conduct' },
-  'Not carrying ID card (visible place)':   { pts: 0, cat: 'conduct' },
-  'Not carrying ID card in Camp Butmir':    { pts: 0, cat: 'conduct' }
+  'Speeding 5-10 km/h over limit':          { pts: 1, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)'] },
+  'Speeding 11-20 km/h over limit':         { pts: 2, cat: 'driving', suspDays: 14, notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
+  'Speeding 21+ km/h over limit':           { pts: 3, cat: 'driving', suspDays: 14, notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
+  'Parking in front of Bldg 200 / circle':  { pts: 3, cat: 'driving', notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
+  'Parking violation':                       { pts: 0, cat: 'driving', notify: ['SNR/Branch Chief (3rd violation+)'] },
+  'Smoking in NATO/EUFOR vehicle':          { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
+  'Failure to fasten seatbelt':             { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)'] },
+  'Using cellphone during driving':         { pts: 2, cat: 'driving', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
+  'Operating vehicle under alcohol/drugs':  { pts: 0, cat: 'driving', suspend: true, suspEOT: true, notify: ['SNR/Branch Chief', 'FPM', 'HQ CAMP CMDT'] },
+  'Causing damage to EUFOR/NATO vehicle':   { pts: 0, cat: 'driving', suspend: true, suspEOT: true, notify: ['SNR/Branch Chief', 'FPM', 'HQ CAMP CMDT'] },
+  'Failure to report to IMP':               { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
+  'Uncooperative behaviour to IMP':         { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
+  'Dress prescription violation':           { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
+  'Alcohol prescription violation':         { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'HQ CAMP CMDT', 'FPM'] },
+  'Weapon carry prescription violation':    { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief', 'FPM'] },
+  'Pedestrian violation':                   { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)'] },
+  'Bicycle/scooter violation':              { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)'] },
+  'Quiet hours violation':                  { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] },
+  'Not carrying ID card (visible place)':   { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (3rd violation+)', 'FPM'] },
+  'Not carrying ID card in Camp Butmir':    { pts: 0, cat: 'conduct', notify: ['SNR/Branch Chief (2nd violation+)', 'FPM'] }
 };
 
 let records = [];
@@ -378,12 +378,17 @@ function onViolChange() {
   const vdata = VIOLATIONS[v];
   speedWrap.style.display = v.toLowerCase().includes('speeding') ? 'block' : 'none';
 
+  const notifyStr = (vdata.notify && vdata.notify.length) ? vdata.notify.join(', ') : '';
   if (vdata.suspend) {
-    hint.innerHTML = `<div class="status-suspended">LICENSE SUSPENDED until EOT &amp; SNR notified immediately</div>`;
+    const dur = vdata.suspEOT ? 'until EOT (End of Tour)' : vdata.suspDays ? `for ${vdata.suspDays} days` : '';
+    hint.innerHTML = `<div class="status-suspended">LICENSE SUSPENDED ${dur}</div>`
+      + (notifyStr ? `<div class="status-warn" style="margin-top:4px;font-size:12px">Notify immediately: ${notifyStr}</div>` : '');
   } else if (vdata.pts > 0) {
-    hint.innerHTML = `<span class="badge badge-amber">${vdata.pts} penalty point(s) per occurrence</span>`;
+    hint.innerHTML = `<span class="badge badge-amber">${vdata.pts} penalty point(s)</span>`
+      + (notifyStr ? `<div class="status-warn" style="margin-top:6px;font-size:12px">Notify: ${notifyStr}</div>` : '');
   } else {
-    hint.innerHTML = `<span class="badge badge-gray">Warning / disciplinary referral only</span>`;
+    hint.innerHTML = `<span class="badge badge-gray">Warning / disciplinary referral only</span>`
+      + (notifyStr ? `<div style="font-size:12px;color:var(--text2);margin-top:6px">Notify: ${notifyStr}</div>` : '');
   }
   preview.innerHTML = '';
 }
@@ -412,24 +417,50 @@ function submitRecord() {
   const newTotal = totalPtsForPerson(oid) + pts;
   const susp = (vdata && vdata.suspend) || newTotal >= 5;
 
+  // Determine suspension duration
+  let suspDuration = '';
+  let suspUntil = '';
+  if (susp) {
+    if (vdata && vdata.suspEOT) {
+      suspDuration = 'Until EOT (End of Tour)';
+    } else if (newTotal >= 5) {
+      suspDuration = '1 month (5 penalty points accumulated)';
+      const until = new Date();
+      until.setMonth(until.getMonth() + 1);
+      suspUntil = until.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } else if (vdata && vdata.suspDays) {
+      suspDuration = `${vdata.suspDays} days`;
+      const until = new Date();
+      until.setDate(until.getDate() + vdata.suspDays);
+      suspUntil = until.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  }
+
+  const notify = (vdata && vdata.notify) ? vdata.notify : [];
+
   const rec = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     rank, first, last, unit, vtype, occur, notes, officer,
     date: date || new Date().toISOString(),
     speed: speed || '',
-    pts, susp, oid,
+    pts, susp, suspDuration, suspUntil, notify, oid,
     ts: Date.now()
   };
 
   records.unshift(rec);
   saveData();
 
-  // Show confirmation
-  const msg = susp
-    ? `Record saved.\n\nWARNING: License suspended (${newTotal >= 5 ? '5+ penalty points accumulated' : 'mandatory suspension offense'}).`
-    : pts > 0
-      ? `Record saved.\nPenalty points added: ${pts}\nTotal for ${first} ${last}: ${newTotal}/5`
-      : 'Record saved.';
+  // Show confirmation with action required
+  let msg = '';
+  if (susp) {
+    msg = `Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil ? '\nUntil: ' + suspUntil : ''}\n\nNotify immediately:\n${notify.map(n => '• ' + n).join('\n')}`;
+  } else if (pts > 0) {
+    msg = `Record saved.\nPenalty points added: ${pts}\nTotal for ${first} ${last}: ${newTotal}/5`;
+    if (notify.length) msg += `\n\nNotify: ${notify.join(', ')}`;
+  } else {
+    msg = 'Record saved.';
+    if (notify.length) msg += `\n\nNotify: ${notify.join(', ')}`;
+  }
   alert(msg);
   renderNew();
 }
@@ -478,8 +509,18 @@ function renderRecords(filter) {
   ${warnLine}
   <p class="vc-footer">Reported by: ${r.officer || '—'} &middot; Occurrence #${r.occur}</p>
   ${r.susp
-    ? '<div class="status-suspended">LICENSE SUSPENDED</div>'
+    ? `<div class="status-suspended">
+        LICENSE SUSPENDED
+       </div>
+       <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--radius-sm);padding:8px 12px;margin-top:4px;font-size:12px;color:var(--red-text)">
+         <strong>Duration:</strong> ${r.suspDuration || 'See SOP 3901'}
+         ${r.suspUntil ? `<br><strong>Until:</strong> ${r.suspUntil}` : ''}
+       </div>`
     : '<div class="status-ok">License valid</div>'}
+  ${(r.notify && r.notify.length) ? `
+    <div style="background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--radius-sm);padding:8px 12px;margin-top:6px;font-size:12px;color:var(--amber-text)">
+      <strong>Notify:</strong> ${r.notify.join(' &middot; ')}
+    </div>` : ''}
 </div>`;
     });
   }
