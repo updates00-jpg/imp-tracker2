@@ -509,18 +509,17 @@ function renderRecords(filter) {
   ${warnLine}
   <p class="vc-footer">Reported by: ${r.officer || '—'} &middot; Occurrence #${r.occur}</p>
   ${r.susp
-    ? `<div class="status-suspended">
-        LICENSE SUSPENDED
-       </div>
-       <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--radius-sm);padding:8px 12px;margin-top:4px;font-size:12px;color:var(--red-text)">
-         <strong>Duration:</strong> ${r.suspDuration || 'See SOP 3901'}
-         ${r.suspUntil ? `<br><strong>Until:</strong> ${r.suspUntil}` : ''}
+    ? `<div class="status-suspended">LICENSE SUSPENDED</div>
+       <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--radius-sm);padding:9px 12px;margin-top:4px;font-size:12px;color:var(--red-text);line-height:1.7">
+         <strong>Duration:</strong> ${r.suspDuration || 'See SOP 3901'}<br>
+         ${r.suspUntil ? `<strong>Until:</strong> ${r.suspUntil}<br>` : ''}
+         <strong>Action:</strong> Confiscate driving permit. Report to IMP Station. File IMP Occurrence Report.
        </div>`
     : '<div class="status-ok">License valid</div>'}
-  ${(r.notify && r.notify.length) ? `
-    <div style="background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--radius-sm);padding:8px 12px;margin-top:6px;font-size:12px;color:var(--amber-text)">
-      <strong>Notify:</strong> ${r.notify.join(' &middot; ')}
-    </div>` : ''}
+  <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-top:6px;font-size:12px;color:var(--text);line-height:1.8">
+    <p style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">IMP Action Required</p>
+    ${buildActionSteps(r)}
+  </div>
 </div>`;
     });
   }
@@ -870,6 +869,54 @@ function clearAll() {
   saveData();
   alert('All records deleted.');
   renderData();
+}
+
+// ─── ACTION STEPS BUILDER ────────────────────────────────────────────────────
+function buildActionSteps(r) {
+  const vdata = VIOLATIONS[r.vtype] || {};
+  const steps = [];
+  let n = 1;
+
+  // Step 1: IMP Occurrence Report — always
+  steps.push(`<span style="font-weight:600">${n++}.</span> File <strong>IMP Occurrence Report</strong> — record violation in IMP daily occurrence book.`);
+
+  // Step 2: License / driving
+  if (r.susp) {
+    steps.push(`<span style="font-weight:600">${n++}.</span> <strong>Confiscate driving permit</strong> immediately. Hand to IMP Station Commander.`);
+    if (vdata.suspEOT) {
+      steps.push(`<span style="font-weight:600">${n++}.</span> Suspension period: <strong>until EOT</strong> — violator may not operate any EUFOR/NATO vehicle.`);
+    } else if (r.suspUntil) {
+      steps.push(`<span style="font-weight:600">${n++}.</span> Suspension period: <strong>${r.suspDuration}</strong> (until ${r.suspUntil}).`);
+    }
+  }
+
+  // Step 3: Who to notify and how
+  if (r.notify && r.notify.length) {
+    const notifyList = r.notify.map(x => `<strong>${x}</strong>`).join(', ');
+    steps.push(`<span style="font-weight:600">${n++}.</span> Notify via <strong>IMP Report</strong>: ${notifyList}.`);
+  }
+
+  // Step 4: FPM reporting
+  if (vdata.notify && vdata.notify.some(x => x.includes('FPM'))) {
+    steps.push(`<span style="font-weight:600">${n++}.</span> Submit report copy to <strong>FPM (Force Protection Manager)</strong>.`);
+  }
+
+  // Step 5: HQ CAMP CMDT
+  if (vdata.notify && vdata.notify.some(x => x.includes('HQ CAMP CMDT'))) {
+    steps.push(`<span style="font-weight:600">${n++}.</span> Forward report to <strong>HQ CAMP CMDT Operations Section</strong>.`);
+  }
+
+  // Step 6: Alcohol — medical cell
+  if (r.vtype.includes('alcohol') || r.vtype.includes('drugs')) {
+    steps.push(`<span style="font-weight:600">${n++}.</span> Escort violator to <strong>IMP Station</strong>. IMP decides if <strong>Medical Cell</strong> referral required.`);
+  }
+
+  // Step 7: 5-point suspension
+  if (r.susp && !vdata.suspend) {
+    steps.push(`<span style="font-weight:600">${n++}.</span> 5-point threshold reached — suspension <strong>1 month</strong>. Notify SNR and forward to HQ CAMP CMDT.`);
+  }
+
+  return steps.map(s => `<div style="margin-bottom:2px">${s}</div>`).join('');
 }
 
 // ─── COPY JSON ───────────────────────────────────────────────────────────────
