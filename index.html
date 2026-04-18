@@ -51,6 +51,18 @@ html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSy
 .s-ok{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--green-text);font-weight:600;margin-top:7px}
 .s-warn{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--amber-text);font-weight:600;margin-top:7px}
 .hint{font-size:13px;color:var(--text2);line-height:1.6}
+.ac-wrap{position:relative}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--blue);border-radius:var(--rsm);z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:180px;overflow-y:auto;margin-top:2px}
+.ac-item{padding:10px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item:active{background:var(--blue-bg)}
+.ac-name{font-weight:600}
+.ac-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.person-banner{border-radius:var(--rsm);padding:10px 12px;margin-bottom:12px;font-size:13px;line-height:1.6}
+.person-banner.warn{background:var(--amber-bg);border:0.5px solid var(--amber);color:var(--amber-text)}
+.person-banner.danger{background:var(--red-bg);border:0.5px solid var(--red);color:var(--red-text)}
+.person-banner.info{background:var(--blue-bg);border:0.5px solid var(--blue);color:var(--blue-text)}
+.pb-title{font-weight:600;margin-bottom:3px}
 .empty{text-align:center;padding:32px;color:var(--text3);font-size:13px}
 /* Dashboard */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
@@ -290,9 +302,12 @@ function renderNew(){
 <div class="card"><p class="sec">Violator details</p>
   <div class="field"><label>NATO Rank</label><select id="f-rank">${rankOpts}</select></div>
   <div class="row2">
-    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off"/></div>
-    <div class="field"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off"/></div>
+    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput()"/></div>
+    <div class="field ac-wrap"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off" oninput="onNameInput()" onfocus="onNameInput()"/>
+      <div id="ac-dropdown" class="ac-dropdown" style="display:none"></div>
+    </div>
   </div>
+  <div id="person-banner"></div>
   <div class="field"><label>Unit / NSE / Nation</label><input id="f-unit" placeholder="e.g. DEU NSE" autocomplete="off"/></div>
 </div>
 <div class="card"><p class="sec">Violation details</p>
@@ -329,6 +344,98 @@ function onViolChange(){
     hint.innerHTML=`<span class="badge b-gray">Warning / disciplinary only</span>`+(ns?`<div style="font-size:12px;color:var(--text2);margin-top:5px">Notify: ${ns}</div>`:'');
   }
 }
+
+function onNameInput(){
+  const first=document.getElementById('f-first').value.trim().toLowerCase();
+  const last=document.getElementById('f-last').value.trim().toLowerCase();
+  const dropdown=document.getElementById('ac-dropdown');
+  const banner=document.getElementById('person-banner');
+  if(!dropdown||!banner)return;
+
+  // Build unique people list from records
+  const people={};
+  records.forEach(r=>{
+    if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};
+  });
+
+  // Match by first or last name
+  const query=(first+' '+last).trim();
+  if(query.length<2){dropdown.style.display='none';banner.innerHTML='';return;}
+
+  const matches=Object.values(people).filter(p=>{
+    const full=(p.first+' '+p.last).toLowerCase();
+    const fl=p.first.toLowerCase(),ll=p.last.toLowerCase();
+    return fl.includes(first)||ll.includes(last)||(last.length>=2&&ll.startsWith(last))||(first.length>=2&&fl.startsWith(first));
+  }).slice(0,6);
+
+  // Show dropdown
+  if(matches.length>0){
+    dropdown.style.display='block';
+    dropdown.innerHTML=matches.map(p=>{
+      const tp=totalPtsForPerson(p.oid);
+      const rcount=records.filter(r=>r.oid===p.oid).length;
+      const susp=records.some(r=>r.oid===p.oid&&r.susp);
+      const statusIcon=susp?'🔴':tp>=4?'🟡':'🟢';
+      return `<div class="ac-item" onclick="selectPerson('${p.oid}')">
+        <div class="ac-name">${statusIcon} ${p.rank} ${p.first} ${p.last}</div>
+        <div class="ac-sub">${p.unit||'—'} · ${rcount} violation${rcount>1?'s':''} · ${tp} pts${susp?' · SUSPENDED':''}</div>
+      </div>`;
+    }).join('');
+  } else {
+    dropdown.style.display='none';
+  }
+
+  // Show person banner if exact match found
+  const exactOid=(document.getElementById('f-first').value.trim()+'_'+document.getElementById('f-last').value.trim()).toLowerCase().replace(/\s+/g,'_');
+  const exactMatch=Object.values(people).find(p=>p.oid===exactOid);
+  if(exactMatch){
+    showPersonBanner(exactMatch);
+  } else {
+    banner.innerHTML='';
+  }
+}
+
+function selectPerson(oid){
+  const people={};
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
+  const p=people[oid];
+  if(!p)return;
+  document.getElementById('f-first').value=p.first;
+  document.getElementById('f-last').value=p.last;
+  document.getElementById('f-rank').value=p.rank;
+  document.getElementById('f-unit').value=p.unit||'';
+  document.getElementById('ac-dropdown').style.display='none';
+  showPersonBanner(p);
+}
+
+function showPersonBanner(p){
+  const banner=document.getElementById('person-banner');
+  if(!banner)return;
+  const tp=totalPtsForPerson(p.oid);
+  const recs=records.filter(r=>r.oid===p.oid);
+  const susp=recs.some(r=>r.susp);
+  const lastRec=recs[0];
+  const lastDate=lastRec?new Date(lastRec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+
+  let cls='info',icon='ℹ';
+  if(susp){cls='danger';icon='🚫';}
+  else if(tp>=4){cls='warn';icon='⚠';}
+  else if(recs.length>0){cls='warn';icon='⚠';}
+
+  banner.innerHTML=`<div class="person-banner ${cls}">
+    <div class="pb-title">${icon} ${p.rank} ${p.first} ${p.last} — already in database</div>
+    <div>${recs.length} violation${recs.length>1?'s':''} on record · ${tp} penalty point${tp!==1?'s':''} · Last: ${lastDate}</div>
+    ${susp?'<div style="font-weight:600;margin-top:3px">LICENSE CURRENTLY SUSPENDED</div>':''}
+    ${tp>=4&&!susp?'<div style="font-weight:600;margin-top:3px">Warning: '+tp+'/5 points — approaching suspension</div>':''}
+    <div style="margin-top:6px"><button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';renderRecords();setTimeout(()=>{const si=document.getElementById('search-input');if(si){si.value='${p.first} ${p.last}';}},100)">View all records for this person →</button></div>
+  </div>`;
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  const dd=document.getElementById('ac-dropdown');
+  if(dd&&!dd.contains(e.target)&&e.target.id!=='f-last'&&e.target.id!=='f-first'){dd.style.display='none';}
+});
 
 function submitRecord(){
   const rank=document.getElementById('f-rank').value;
