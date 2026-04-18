@@ -1174,8 +1174,42 @@ function applyImport(imported,mode,resultId){
 }
 function clearAll(){
   if(records.length===0){alert('No records to delete.');return;}
-  if(!confirm(`Delete ALL ${records.length} record(s)? This cannot be undone.`))return;
-  records=[];saveData();alert('All records deleted.');renderData();
+  showClearAllPINModal();
+}
+
+function showClearAllPINModal(){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to delete all</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">This will permanently delete all ${records.length} records. This cannot be undone.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmClearAll()"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmClearAll()">Delete all</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
+}
+
+function confirmClearAll(){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='2685'){
+    document.getElementById('pin-modal').remove();
+    records=[];saveData();
+    alert('All records deleted.');
+    renderData();renderDash();
+  } else {
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
+  }
 }
 
 // ─── COPY JSON ────────────────────────────────────────────────────────────────
