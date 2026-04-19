@@ -315,39 +315,121 @@ function setPage(p){
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDash(){
-  // Get unique suspended people (dynamic check)
   const uniqueOids=[...new Set(records.map(r=>r.oid))];
-  const suspCount=uniqueOids.filter(oid=>isPersonCurrentlySuspended(oid)).length;
-  // People approaching 5pts (4pts, not yet suspended)
+  const suspCount=uniqueOids.filter(o=>isPersonCurrentlySuspended(o)).length;
   const people={};
-  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,oid:r.oid};});
-  const nearLimit=Object.values(people).filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!isPersonCurrentlySuspended(p.oid);});
-  const recent=records.slice(0,3);
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
+  const pList=Object.values(people);
+  const nearLimit=pList.filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!isPersonCurrentlySuspended(p.oid);});
   const total=records.length;
+  const totalPts=records.reduce((s,r)=>s+(r.pts||0),0);
+  const drivingCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving').length;
+  const conductCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct').length;
 
-  let html=`
-<div class="dash-grid">
-  <div class="dash-card" onclick="setPage('records');_filterMode='all'">
-    <div class="dash-num blue">${total}</div><div class="dash-lbl">Total records</div>
-  </div>
-  <div class="dash-card" onclick="setPage('records');_filterMode='suspended'">
-    <div class="dash-num red">${suspCount}</div><div class="dash-lbl">Licenses suspended</div>
-  </div>
-</div>`;
+  // Today and this week counts
+  const now=Date.now();
+  const todayStart=new Date();todayStart.setHours(0,0,0,0);
+  const weekStart=new Date(todayStart);weekStart.setDate(weekStart.getDate()-7);
+  const todayCount=records.filter(r=>r.ts>=todayStart.getTime()).length;
+  const weekCount=records.filter(r=>r.ts>=weekStart.getTime()).length;
 
-  if(nearLimit.length>0){
-    html+=`<div class="card"><p class="sec">Approaching suspension (4+ pts)</p>`;
-    nearLimit.forEach(p=>{
-      const t=totalPtsForPerson(p.oid);
-      html+=`<div class="warn-item">
-        <div class="warn-pts">${t}</div>
-        <div><div class="warn-name">${p.rank} ${p.first} ${p.last}</div>
-        <div class="warn-sub">${5-t} point(s) until suspension</div></div>
+  // Most frequent violation
+  const vtypeCount={};
+  records.forEach(r=>{vtypeCount[r.vtype]=(vtypeCount[r.vtype]||0)+1;});
+  const topVtype=Object.entries(vtypeCount).sort((a,b)=>b[1]-a[1])[0];
+
+  // Top 5 people by pts for bar chart
+  const topPeople=pList.map(p=>({...p,pts:totalPtsForPerson(p.oid),susp:isPersonCurrentlySuspended(p.oid),count:records.filter(r=>r.oid===p.oid).length}))
+    .sort((a,b)=>b.pts-a.pts||b.count-a.count).slice(0,5);
+  const maxPts=topPeople.length?Math.max(...topPeople.map(p=>p.pts),1):1;
+
+  // Driving vs conduct bar
+  const drivingPct=total?Math.round(drivingCount/total*100):0;
+
+  let html='';
+
+  // ── STATUS BAR ──
+  html+=`<div style="background:var(--blue);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+    <span style="color:#fff;font-size:13px;font-weight:600">${total} records</span>
+    <span style="color:rgba(255,255,255,.7);font-size:12px">${suspCount} suspended · ${totalPts} pts · ${nearLimit.length} near limit</span>
+  </div>`;
+
+  // ── 4 STAT CARDS ──
+  html+=`<div class="dash-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="dash-card" onclick="setPage('records');_filterMode='all'">
+      <div class="dash-num blue">${total}</div><div class="dash-lbl">Total records</div>
+    </div>
+    <div class="dash-card" onclick="setPage('records');_filterMode='suspended'">
+      <div class="dash-num red">${suspCount}</div><div class="dash-lbl">Suspended</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-num" style="color:var(--text)">${todayCount}</div>
+      <div class="dash-lbl">Today · <span style="color:var(--text2)">${weekCount} this week</span></div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-num amber">${nearLimit.length}</div><div class="dash-lbl">Near limit (4+ pts)</div>
+    </div>
+  </div>`;
+
+  // ── TOP VIOLATORS BAR CHART ──
+  if(topPeople.length>0){
+    html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Top violators — penalty points</p>`;
+    topPeople.forEach(p=>{
+      const pct=maxPts>0?Math.round(p.pts/maxPts*100):0;
+      const barColor=p.susp?'var(--red)':p.pts>=4?'var(--amber)':'var(--blue)';
+      const statusBadge=p.susp?'<span style="font-size:10px;color:var(--red-text);background:var(--red-bg);padding:1px 5px;border-radius:8px;font-weight:600">SUSP</span>':
+        p.pts>=4?'<span style="font-size:10px;color:var(--amber-text);background:var(--amber-bg);padding:1px 5px;border-radius:8px">⚠</span>':'';
+      html+=`<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:500;color:var(--text)">${p.first} ${p.last} ${statusBadge}</span>
+          <span style="font-size:11px;color:var(--text2)">${p.pts} pts · ${p.count} violations</span>
+        </div>
+        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .4s"></div>
+        </div>
       </div>`;
     });
     html+=`</div>`;
   }
 
+  // ── VIOLATION BREAKDOWN ──
+  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Violation breakdown</p>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">Driving <b style="color:var(--text)">${drivingCount}</b></span>
+        <span style="font-size:12px;color:var(--text2)">Conduct <b style="color:var(--text)">${conductCount}</b></span>
+      </div>
+      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;display:flex">
+        <div style="height:100%;width:${drivingPct}%;background:var(--blue);transition:width .4s"></div>
+        <div style="height:100%;flex:1;background:var(--green)"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:4px">
+        <span style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--blue);border-radius:2px;display:inline-block"></span>Driving ${drivingPct}%</span>
+        <span style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>Conduct ${100-drivingPct}%</span>
+      </div>
+    </div>
+    ${topVtype?`<div style="padding:8px 10px;background:var(--bg2);border-radius:var(--rsm)">
+      <span style="font-size:11px;color:var(--text2)">Most frequent: </span>
+      <span style="font-size:12px;font-weight:500;color:var(--text)">${topVtype[0].slice(0,40)} · ${topVtype[1]}x</span>
+    </div>`:''}
+  </div>`;
+
+  // ── NEAR LIMIT ALERT ──
+  if(nearLimit.length>0){
+    html+=`<div class="card" style="border-color:var(--amber);margin-bottom:10px"><p class="sec" style="color:var(--amber)">⚠ Approaching suspension</p>`;
+    nearLimit.forEach(p=>{
+      const t=totalPtsForPerson(p.oid);
+      html+=`<div class="warn-item">
+        <div class="warn-pts">${t}</div>
+        <div><div class="warn-name">${p.rank} ${p.first} ${p.last}</div>
+        <div class="warn-sub">${p.unit||'—'} · ${5-t} pt${5-t!==1?'s':''} until suspension</div></div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── RECENT 3 RECORDS ──
+  const recent=records.slice(0,3);
   html+=`<div class="card"><p class="sec">Recent records</p>`;
   if(recent.length===0){
     html+=`<div class="empty" style="padding:16px">No records yet.</div>`;
@@ -357,7 +439,7 @@ function renderDash(){
       const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
       html+=`<div class="recent-item">
         <div class="ri-dot ${dot}"></div>
-        <div class="ri-name">${r.rank} ${r.first} ${r.last}<br><span style="font-size:11px;color:var(--text2)">${r.vtype.slice(0,36)}</span></div>
+        <div class="ri-name">${r.rank} ${r.first} ${r.last}<br><span style="font-size:11px;color:var(--text2)">${r.vtype.slice(0,38)}</span></div>
         <div class="ri-sub">${d}</div>
       </div>`;
     });
@@ -365,7 +447,7 @@ function renderDash(){
   html+=`</div>`;
 
   if(records.length>0){
-    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:2px">View all records →</button>`;
+    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:6px">View all records →</button>`;
   }
 
   document.getElementById('page-dash').innerHTML=html;
@@ -388,7 +470,7 @@ function renderNew(){
 <div class="card"><p class="sec">Violator details</p>
   <div class="field"><label>NATO Rank</label><select id="f-rank">${rankOpts}</select></div>
   <div class="row2">
-    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()"/></div>
+    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()" onfocus="onNameInput()"/></div>
     <div class="field ac-wrap"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()" onfocus="onNameInput()"/>
       <div id="ac-dropdown" class="ac-dropdown" style="display:none"></div>
     </div>
@@ -412,7 +494,14 @@ function renderNew(){
     <div class="mic-status" id="mic-status"></div>
   </div>
   <div class="row2">
-    <div class="field"><label>Reporting officer</label><input id="f-officer" placeholder="Your name" autocomplete="off"/></div>
+    <div class="field"><label>Reporting officer</label>
+      <select id="f-officer-sel" onchange="onOfficerChange()">
+        <option value="">Select officer...</option>
+        ${Array.from({length:15},(_,i)=>`<option value="IMP-${i+1}"${localStorage.getItem('cbvt_last_officer')==='IMP-'+(i+1)?' selected':''}>IMP-${i+1}</option>`).join('')}
+        <option value="other"${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'':' selected'}>Other...</option>
+      </select>
+      <input id="f-officer" placeholder="Enter name..." autocomplete="off" style="margin-top:5px;display:${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'none':'block'}" value="${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'':localStorage.getItem('cbvt_last_officer')||''}"/>
+    </div>
     <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
   </div>
 </div>
@@ -495,54 +584,86 @@ function updateOccurrenceBox(){
   box.innerHTML=html;
 }
 
+function highlight(text, query){
+  if(!query) return text;
+  const idx=text.toLowerCase().indexOf(query.toLowerCase());
+  if(idx<0) return text;
+  return text.slice(0,idx)+'<b>'+text.slice(idx,idx+query.length)+'</b>'+text.slice(idx+query.length);
+}
+
 function onNameInput(){
-  const first=document.getElementById('f-first').value.trim().toLowerCase();
-  const last=document.getElementById('f-last').value.trim().toLowerCase();
+  const firstEl=document.getElementById('f-first');
+  const lastEl=document.getElementById('f-last');
+  const first=(firstEl?firstEl.value.trim():'').toLowerCase();
+  const last=(lastEl?lastEl.value.trim():'').toLowerCase();
   const dropdown=document.getElementById('ac-dropdown');
   const banner=document.getElementById('person-banner');
   if(!dropdown||!banner)return;
 
-  // Build unique people list from records
+  // Build unique people list
   const people={};
-  records.forEach(r=>{
-    if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};
-  });
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
 
-  // Match by first or last name
-  const query=(first+' '+last).trim();
-  if(query.length<2){dropdown.style.display='none';banner.innerHTML='';return;}
+  // Match: if typing in first name field, filter by first name; last name field → last name
+  // Also accept matches on either field for convenience
+  const activeField=document.activeElement;
+  const typingFirst=activeField&&activeField.id==='f-first';
+  const typingLast=activeField&&activeField.id==='f-last';
+  const query=typingFirst?first:typingLast?last:(first||last);
+  const queryField=typingFirst?'first':typingLast?'last':'any';
+
+  if(!query){dropdown.style.display='none';banner.innerHTML='';return;}
 
   const matches=Object.values(people).filter(p=>{
-    const full=(p.first+' '+p.last).toLowerCase();
     const fl=p.first.toLowerCase(),ll=p.last.toLowerCase();
-    return fl.includes(first)||ll.includes(last)||(last.length>=2&&ll.startsWith(last))||(first.length>=2&&fl.startsWith(first));
-  }).slice(0,6);
+    if(queryField==='first') return fl.includes(query);
+    if(queryField==='last') return ll.includes(query);
+    return fl.includes(query)||ll.includes(query);
+  }).sort((a,b)=>a.last.localeCompare(b.last)).slice(0,5);
 
-  // Show dropdown
   if(matches.length>0){
     dropdown.style.display='block';
     dropdown.innerHTML=matches.map(p=>{
       const tp=totalPtsForPerson(p.oid);
       const rcount=records.filter(r=>r.oid===p.oid).length;
-      const susp=records.some(r=>r.oid===p.oid&&r.susp);
-      const statusIcon=susp?'🔴':tp>=4?'🟡':'🟢';
+      const susp=isPersonCurrentlySuspended(p.oid);
+      const icon=susp?'🔴':tp>=4?'🟡':'🟢';
+      const hFirst=queryField==='first'||queryField==='any'?highlight(p.first,query):p.first;
+      const hLast=queryField==='last'||queryField==='any'?highlight(p.last,query):p.last;
       return `<div class="ac-item" onclick="selectPerson('${p.oid}')">
-        <div class="ac-name">${statusIcon} ${p.rank} ${p.first} ${p.last}</div>
-        <div class="ac-sub">${p.unit||'—'} · ${rcount} violation${rcount>1?'s':''} · ${tp} pts${susp?' · SUSPENDED':''}</div>
+        <div class="ac-name">${icon} ${p.rank} ${hFirst} ${hLast}</div>
+        <div class="ac-sub">${p.unit||'—'} · ${rcount} violation${rcount>1?'s':''} · ${tp} pts${susp?' · <b style=color:var(--red-text)>SUSPENDED</b>':''}</div>
       </div>`;
     }).join('');
   } else {
     dropdown.style.display='none';
   }
 
-  // Show person banner if exact match found
-  const exactOid=(document.getElementById('f-first').value.trim()+'_'+document.getElementById('f-last').value.trim()).toLowerCase().replace(/\s+/g,'_');
-  const exactMatch=Object.values(people).find(p=>p.oid===exactOid);
-  if(exactMatch){
-    showPersonBanner(exactMatch);
+  // Show banner if exact match
+  const exactOid=((firstEl?firstEl.value.trim():'')+' '+(lastEl?lastEl.value.trim():'')).trim().replace(/\s+/g,'_').toLowerCase();
+  const exactOid2=(firstEl?firstEl.value.trim():'').toLowerCase()+'_'+(lastEl?lastEl.value.trim():'').toLowerCase();
+  const exactMatch=Object.values(people).find(p=>p.oid===exactOid2);
+  if(exactMatch){ showPersonBanner(exactMatch); } else { banner.innerHTML=''; }
+}
+
+function onOfficerChange(){
+  const sel=document.getElementById('f-officer-sel');
+  const inp=document.getElementById('f-officer');
+  if(!sel||!inp)return;
+  if(sel.value==='other'){
+    inp.style.display='block';inp.focus();
   } else {
-    banner.innerHTML='';
+    inp.style.display='none';
+    inp.value=sel.value;
   }
+}
+
+function getOfficerValue(){
+  const sel=document.getElementById('f-officer-sel');
+  const inp=document.getElementById('f-officer');
+  if(sel&&sel.value&&sel.value!=='other') return sel.value;
+  if(inp) return inp.value.trim();
+  return '';
 }
 
 function selectPerson(oid){
@@ -614,7 +735,7 @@ function submitRecord(){
   const occurSel=document.getElementById('f-occur');
   const occur=occurSel?parseInt(occurSel.value)||1:1;
   const notes=document.getElementById('f-notes').value.trim();
-  const officer=document.getElementById('f-officer').value.trim();
+  const officer=getOfficerValue();
   const date=document.getElementById('f-date').value;
   const speedEl=document.getElementById('f-speed');
   const speed=speedEl?speedEl.value:'';
@@ -634,6 +755,7 @@ function submitRecord(){
   const notify=(vd&&vd.notify)?vd.notify:[];
   const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),rank,first,last,unit,vtype,occur,notes,officer,date:date||new Date().toISOString(),speed:speed||'',pts,susp,suspDuration,suspUntil,notify,oid,ts:Date.now()};
   records.unshift(rec);saveData();
+  if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
   const action=getActionForOccurrence(vtype,occur);
   let msg='';
   if(susp){
@@ -1057,6 +1179,7 @@ function importSingleRecord(rec,resultId){
   if(!rec||!rec.id||!rec.first||!rec.vtype){if(el)el.innerHTML='<div class="s-susp">Invalid record structure.</div>';return;}
   if(records.find(r=>r.id===rec.id)){if(el)el.innerHTML='<div class="import-already">Record already exists. No duplicate added.</div>';return;}
   records.unshift(rec);saveData();
+  if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
   const d=new Date(rec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600;margin-bottom:3px">Imported successfully</p><p>${rec.rank} ${rec.first} ${rec.last}</p><p>${rec.vtype} · ${d}</p>${rec.susp?'<p style="color:var(--red-text);font-weight:600;margin-top:3px">License suspended</p>':''}</div>`;
 }
