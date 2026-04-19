@@ -51,6 +51,18 @@ html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSy
 .s-ok{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--green-text);font-weight:600;margin-top:7px}
 .s-warn{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--amber-text);font-weight:600;margin-top:7px}
 .hint{font-size:13px;color:var(--text2);line-height:1.6}
+.login-screen{position:fixed;inset:0;background:var(--bg3);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:28px 22px;width:100%;max-width:340px;text-align:center}
+.login-logo{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;display:block}
+.login-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
+.login-sel{width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit;margin-bottom:10px;appearance:none;-webkit-appearance:none}
+.login-pin{width:100%;padding:13px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:24px;letter-spacing:8px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px}
+.login-pin:focus{border-color:var(--blue)}
+.session-bar{background:var(--blue);padding:6px 14px;display:flex;justify-content:space-between;align-items:center;max-width:480px;margin:0 auto}
+.session-bar span{color:#fff;font-size:12px;font-weight:500}
+.session-bar button{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:11px;padding:3px 9px;border-radius:20px;cursor:pointer;font-family:inherit}
+.edit-badge{font-size:10px;color:var(--text3);margin-top:4px;font-style:italic}
 .mic-wrap{position:relative}
 .mic-btn{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .mic-btn svg{width:16px;height:16px;fill:var(--text2)}
@@ -155,6 +167,10 @@ html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSy
 </style>
 </head>
 <body>
+<div id="session-bar" style="display:none" class="session-bar">
+  <span id="session-label">IMP-1</span>
+  <button onclick="showLogout()">Sign out</button>
+</div>
 <div class="app" id="app">
   <div class="header">
     <div style="width:42px;height:42px;flex-shrink:0"><img src="data:image/png;base64,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" style="width:42px;height:42px;border-radius:50%;display:block" alt="EUFOR"/></div>
@@ -190,6 +206,29 @@ const NATO_RANKS=[
   {g:'OF — Officers',ranks:['OF-1 (Second Lieutenant)','OF-2 (First Lieutenant)','OF-3 (Captain)','OF-4 (Major)','OF-5 (Lieutenant Colonel)','OF-6 (Colonel)','OF-7 (Brigadier General)','OF-8 (Major General)','OF-9 (Lieutenant General)','OF-10 (General)']},
   {g:'Civilian',ranks:['CIV (Civilian)']}
 ];
+// ─── OFFICER CREDENTIALS ─────────────────────────────────────────────────────
+const OFFICER_PINS={
+  'IMP-1':'1111','IMP-2':'2222','IMP-3':'3333','IMP-4':'4444','IMP-5':'5555',
+  'IMP-6':'6666','IMP-7':'7777','IMP-8':'8888','IMP-9':'9999','IMP-10':'1010',
+  'IMP-11':'1100','IMP-12':'1200','IMP-13':'1300','IMP-14':'1400','IMP-15':'1500',
+  'ADMIN':'2685'
+};
+function isAdmin(){ return getCurrentOfficer()==='ADMIN'; }
+let _currentOfficer = null;
+
+function getCurrentOfficer(){
+  if(_currentOfficer) return _currentOfficer;
+  try{ return localStorage.getItem('cbvt_session_officer')||null; }catch(e){return null;}
+}
+function setCurrentOfficer(name){
+  _currentOfficer=name;
+  try{ localStorage.setItem('cbvt_session_officer',name); }catch(e){}
+}
+function clearSession(){
+  _currentOfficer=null;
+  try{ localStorage.removeItem('cbvt_session_officer'); }catch(e){}
+}
+
 const VIOLATIONS={
   // cat: driving/conduct | pts: penalty points per occurrence
   // snrFrom: occurrence number from which SNR must be notified
@@ -497,10 +536,11 @@ function renderNew(){
     <div class="field"><label>Reporting officer</label>
       <select id="f-officer-sel" onchange="onOfficerChange()">
         <option value="">Select officer...</option>
-        ${Array.from({length:15},(_,i)=>`<option value="IMP-${i+1}"${localStorage.getItem('cbvt_last_officer')==='IMP-'+(i+1)?' selected':''}>IMP-${i+1}</option>`).join('')}
-        <option value="other"${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'':' selected'}>Other...</option>
+        ${Array.from({length:15},(_,i)=>{const o='IMP-'+(i+1);const cur=getCurrentOfficer();return `<option value="${o}"${cur===o?' selected':''}>${o}</option>`;}).join('')}
+        ${isAdmin()?'<option value="ADMIN" selected>ADMIN</option>':''}
+        <option value="other">Other...</option>
       </select>
-      <input id="f-officer" placeholder="Enter name..." autocomplete="off" style="margin-top:5px;display:${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'none':'block'}" value="${!localStorage.getItem('cbvt_last_officer')||localStorage.getItem('cbvt_last_officer').startsWith('IMP-')?'':localStorage.getItem('cbvt_last_officer')||''}"/>
+      <input id="f-officer" placeholder="Enter name..." autocomplete="off" style="margin-top:5px;display:none" value=""/>
     </div>
     <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
   </div>
@@ -662,8 +702,9 @@ function getOfficerValue(){
   const sel=document.getElementById('f-officer-sel');
   const inp=document.getElementById('f-officer');
   if(sel&&sel.value&&sel.value!=='other') return sel.value;
-  if(inp) return inp.value.trim();
-  return '';
+  if(inp&&inp.value.trim()) return inp.value.trim();
+  // Fallback to session officer
+  return getCurrentOfficer()||'';
 }
 
 function selectPerson(oid){
@@ -897,9 +938,11 @@ function buildListItem(r){
       ${r.notes?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px;font-style:italic">${r.notes}</p>`:''}
       <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Reported by: ${r.officer||'—'} · Occurrence #${r.occur} · ${new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
       <div class="action-box"><p class="lbl">IMP Action Required</p>${buildActionSteps(r)}</div>
-      <div style="margin-top:10px;display:flex;justify-content:space-between">
-        <button class="btn btn-sm" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();_expandedId='${r.id}';generatePDFReport('single')">Print record</button>
-        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete record</button>
+      ${r.editedAt?`<div class="edit-badge">Edited: ${new Date(r.editedAt).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})} by ${r.editedBy||'—'}</div>`:''}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();_expandedId='${r.id}';generatePDFReport('single')">Print</button>
+        <button class="btn btn-sm" style="color:var(--amber-text);border-color:var(--amber)" onclick="event.stopPropagation();editRecord('${r.id}')">Edit</button>
+        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete</button>
       </div>
     </div>`;
   }
@@ -973,7 +1016,7 @@ function buildPersonView(filtered){
 function togglePerson(oid){_expandedPerson=(_expandedPerson===oid)?null:oid;refreshList();}
 
 // ─── DELETE WITH PIN ──────────────────────────────────────────────────────────
-function deleteRecord(id){showPINModal(id);}
+// deleteRecord defined below
 
 function showPINModal(recordId){
   const old=document.getElementById('pin-modal');if(old)old.remove();
@@ -1009,6 +1052,19 @@ function confirmPIN(id){
   } else {
     err.textContent='Incorrect PIN.';
     input.value='';input.focus();
+  }
+}
+
+// Admin can delete without PIN modal
+function deleteRecord(id){
+  if(isAdmin()){
+    if(!confirm('Delete this record?'))return;
+    records=records.filter(r=>r.id!==id);
+    saveData();
+    if(_viewMode==='person')_expandedPerson=null;else _expandedId=null;
+    refreshList();renderDash();
+  } else {
+    showPINModal(id);
   }
 }
 
@@ -1222,8 +1278,9 @@ function renderData(){
   </div>
   <div id="import-result" style="margin-top:8px"></div>
 </div>
-<div class="card" style="margin-top:10px"><p class="sec">Database info</p>
-  <p class="hint">Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b><br>Data is stored locally on this device only.</p>
+<div class="card" style="margin-top:10px"><p class="sec">Session &amp; database info</p>
+  <p class="hint">Signed in as: <b>${getCurrentOfficer()||'—'}</b>${isAdmin()?' <span style="background:var(--amber-bg);color:var(--amber-text);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">ADMIN · Full access</span>':''}<br>Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b><br>Data is stored locally on this device only.</p>
+  <button class="btn" style="margin-top:10px;color:var(--red);border-color:var(--red)" onclick="showLogout()">Sign out</button>
 </div>
 <div class="card" style="margin-top:10px;border-color:var(--red)"><p class="sec" style="color:var(--red)">Danger zone</p>
   <p class="hint" style="margin-bottom:10px">Permanently delete all locally stored records. Export first.</p>
@@ -1325,7 +1382,12 @@ function applyImport(imported,mode,resultId){
 }
 function clearAll(){
   if(records.length===0){alert('No records to delete.');return;}
-  showClearAllPINModal();
+  if(isAdmin()){
+    if(!confirm(`Delete ALL ${records.length} record(s)? This cannot be undone.`))return;
+    records=[];saveData();alert('All records deleted.');renderData();renderDash();
+  } else {
+    showClearAllPINModal();
+  }
 }
 
 function showClearAllPINModal(){
@@ -1619,6 +1681,219 @@ function generatePDFReport(type, personOid){
   });
 }
 
+// ─── LOGIN / SESSION ─────────────────────────────────────────────────────────
+function checkLogin(){
+  const officer=getCurrentOfficer();
+  if(officer&&OFFICER_PINS[officer]){
+    onLoginSuccess(officer);
+  } else {
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen(){
+  const old=document.getElementById('login-screen');
+  if(old)old.remove();
+  const officerOpts=Object.keys(OFFICER_PINS)
+    .filter(o=>o!=='ADMIN')
+    .map(o=>`<option value="${o}">${o}</option>`).join('')
+    +'<option disabled>──────────</option>'
+    +'<option value="ADMIN">ADMIN</option>';
+  const div=document.createElement('div');
+  div.id='login-screen';
+  div.className='login-screen';
+  div.innerHTML=`
+    <div class="login-box">
+      <img src="${typeof EUFOR_LOGO!=='undefined'?EUFOR_LOGO:''}" class="login-logo" alt="EUFOR"/>
+      <div class="login-title">Camp Butmir — IMP Tracker</div>
+      <div class="login-sub">NATO/EUFOR · SOP 3901 · Identify yourself to continue</div>
+      <select class="login-sel" id="login-officer">
+        <option value="">Select your designation...</option>
+        ${officerOpts}
+      </select>
+      <input type="password" inputmode="numeric" class="login-pin" id="login-pin"
+        placeholder="PIN" maxlength="4"
+        onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div id="login-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+      <p style="font-size:10px;color:var(--text3);margin-top:14px">Authorised personnel only · HQ EUFOR/NHQ Sa</p>
+    </div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>{const s=document.getElementById('login-officer');if(s)s.focus();},100);
+}
+
+function doLogin(){
+  const officer=(document.getElementById('login-officer').value||'').trim();
+  const pin=(document.getElementById('login-pin').value||'').trim();
+  const err=document.getElementById('login-err');
+  if(!officer){err.textContent='Please select your designation.';return;}
+  if(OFFICER_PINS[officer]!==pin){
+    err.textContent='Incorrect PIN. Try again.';
+    document.getElementById('login-pin').value='';
+    document.getElementById('login-pin').focus();
+    return;
+  }
+  onLoginSuccess(officer);
+}
+
+function onLoginSuccess(officer){
+  setCurrentOfficer(officer);
+  const screen=document.getElementById('login-screen');
+  if(screen)screen.remove();
+  // Show session bar
+  const bar=document.getElementById('session-bar');
+  const lbl=document.getElementById('session-label');
+  if(bar){bar.style.display='flex';}
+  if(lbl){
+    if(officer==='ADMIN'){
+      lbl.innerHTML='<span style="background:rgba(255,255,255,.25);padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px">ADMIN</span>Full access';
+    } else {
+      lbl.textContent=officer+' · Signed in';
+    }
+  }
+  // Pre-fill officer field and lock it
+  setPage('dash');
+}
+
+function showLogout(){
+  if(!confirm('Sign out of '+getCurrentOfficer()+'?'))return;
+  clearSession();
+  // Clear officer select
+  const sel=document.getElementById('f-officer-sel');
+  if(sel)sel.value='';
+  const bar=document.getElementById('session-bar');
+  if(bar)bar.style.display='none';
+  showLoginScreen();
+}
+
+// ─── EDIT RECORD ──────────────────────────────────────────────────────────────
+function editRecord(id){
+  if(isAdmin()){ openEditForm(id); }
+  else { showEditPINModal(id); }
+}
+
+function showEditPINModal(recordId){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to edit</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Editing requires supervisor authorisation.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmEditPIN('${recordId}')"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEditPIN('${recordId}')">Edit record</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
+}
+
+function confirmEditPIN(id){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='0230'){
+    document.getElementById('pin-modal').remove();
+    openEditForm(id);
+  } else {
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
+  }
+}
+
+function openEditForm(id){
+  const rec=records.find(r=>r.id===id);
+  if(!rec){alert('Record not found.');return;}
+
+  // Build form same as renderNew but pre-filled
+  let rankOpts='<option value="">Select rank...</option>';
+  NATO_RANKS.forEach(g=>{rankOpts+=`<optgroup label="${g.g}">`;g.ranks.forEach(r=>{rankOpts+=`<option${r===rec.rank?' selected':''}>${r}</option>`;});rankOpts+='</optgroup>';});
+  let vD='<optgroup label="Driving violations">',vC='<optgroup label="Conduct violations">';
+  Object.entries(VIOLATIONS).forEach(([name,v])=>{
+    const lbl=v.suspend?' [LICENSE SUSPENDED]':v.pts>0?` [${v.pts} pt${v.pts>1?'s':''}]`:'';
+    const sel=name===rec.vtype?' selected':'';
+    const opt=`<option value="${name}"${sel}>${name}${lbl}</option>`;
+    if(v.cat==='driving')vD+=opt;else vC+=opt;
+  });
+  vD+='</optgroup>';vC+='</optgroup>';
+
+  const editedBy=getCurrentOfficer()||'Unknown';
+  const editedAt=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const modal=document.createElement('div');
+  modal.id='edit-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:998;overflow-y:auto;padding:12px';
+  modal.innerHTML=`
+    <div style="background:var(--bg3);border-radius:var(--radius);max-width:480px;margin:0 auto;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <p style="font-size:15px;font-weight:600;color:var(--text)">Edit violation record</p>
+        <button class="btn btn-sm" onclick="document.getElementById('edit-modal').remove()">✕ Cancel</button>
+      </div>
+      <div style="background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:8px 11px;font-size:12px;color:var(--amber-text);margin-bottom:12px">
+        Editing as: <b>${editedBy}</b> · ${editedAt}
+      </div>
+      <div class="card"><p class="sec">Violator details</p>
+        <div class="field"><label>NATO Rank</label><select id="ef-rank">${rankOpts}</select></div>
+        <div class="row2">
+          <div class="field"><label>First name</label><input id="ef-first" value="${rec.first}" autocomplete="off"/></div>
+          <div class="field"><label>Last name</label><input id="ef-last" value="${rec.last}" autocomplete="off"/></div>
+        </div>
+        <div class="field"><label>Unit / NSE</label><input id="ef-unit" value="${rec.unit||''}" autocomplete="off"/></div>
+      </div>
+      <div class="card"><p class="sec">Violation details</p>
+        <div class="field"><label>Violation type</label>
+          <select id="ef-vtype"><option value="">Select...</option>${vD}${vC}</select>
+        </div>
+        <div class="field"><label>Speed over limit (km/h)</label><input type="number" id="ef-speed" value="${rec.speed||''}" min="0" max="200"/></div>
+        <div class="field"><label>Location / notes</label><textarea id="ef-notes" style="min-height:68px">${rec.notes||''}</textarea></div>
+        <div class="row2">
+          <div class="field"><label>Reporting officer</label><input id="ef-officer" value="${rec.officer||''}" autocomplete="off"/></div>
+          <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="ef-date" value="${rec.date||''}"/></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveEditRecord('${id}')">Save changes</button>
+      <div style="height:8px"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveEditRecord(id){
+  const idx=records.findIndex(r=>r.id===id);
+  if(idx<0){alert('Record not found.');return;}
+  const r=records[idx];
+  const vtype=document.getElementById('ef-vtype').value||r.vtype;
+  const vd=VIOLATIONS[vtype]||{};
+  const newFirst=document.getElementById('ef-first').value.trim()||r.first;
+  const newLast=document.getElementById('ef-last').value.trim()||r.last;
+  const newOid=(newFirst+'_'+newLast).toLowerCase().replace(/\s+/g,'_');
+  // Recalculate pts and oid
+  records[idx]={
+    ...r,
+    rank:document.getElementById('ef-rank').value||r.rank,
+    first:newFirst,last:newLast,
+    unit:document.getElementById('ef-unit').value.trim()||r.unit,
+    vtype,
+    speed:document.getElementById('ef-speed').value||'',
+    notes:document.getElementById('ef-notes').value.trim(),
+    officer:document.getElementById('ef-officer').value.trim()||r.officer,
+    date:document.getElementById('ef-date').value||r.date,
+    pts:vd.pts||0,
+    notify:vd.notify||[],
+    oid:newOid,
+    editedAt:new Date().toISOString(),
+    editedBy:getCurrentOfficer()||'Unknown'
+  };
+  saveData();
+  document.getElementById('edit-modal').remove();
+  _expandedId=id;
+  refreshList();
+  alert('Record updated successfully.');
+}
+
 // ─── SPEECH RECOGNITION ──────────────────────────────────────────────────────
 let _micRecognition = null;
 let _micListening = false;
@@ -1699,7 +1974,8 @@ function stopMic(){
 // Stop mic when navigating away from New tab
 const _origSetPage = setPage;
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-loadData();setPage('dash');
+loadData();
+checkLogin();
 </script>
 </body>
 </html>
