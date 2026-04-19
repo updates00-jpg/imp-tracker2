@@ -211,8 +211,11 @@ const OFFICER_PINS={
   'IMP-1':'1111','IMP-2':'2222','IMP-3':'3333','IMP-4':'4444','IMP-5':'5555',
   'IMP-6':'6666','IMP-7':'7777','IMP-8':'8888','IMP-9':'9999','IMP-10':'1010',
   'IMP-11':'1100','IMP-12':'1200','IMP-13':'1300','IMP-14':'1400','IMP-15':'1500',
+  'FPM (Force Provost Marshall)':'9911',
   'ADMIN':'2685'
 };
+const READONLY_ROLES=['FPM (Force Provost Marshall)'];
+function isReadOnly(){ return READONLY_ROLES.includes(getCurrentOfficer()); }
 function isAdmin(){ return getCurrentOfficer()==='ADMIN'; }
 let _currentOfficer = null;
 
@@ -768,6 +771,7 @@ document.addEventListener('click',function(e){
 });
 
 function submitRecord(){
+  if(isReadOnly()){alert('Read-only access. You cannot add records.');return;}
   const rank=document.getElementById('f-rank').value;
   const first=document.getElementById('f-first').value.trim();
   const last=document.getElementById('f-last').value.trim();
@@ -941,8 +945,8 @@ function buildListItem(r){
       ${r.editedAt?`<div class="edit-badge">Edited: ${new Date(r.editedAt).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})} by ${r.editedBy||'—'}</div>`:''}
       <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-sm" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();_expandedId='${r.id}';generatePDFReport('single')">Print</button>
-        <button class="btn btn-sm" style="color:var(--amber-text);border-color:var(--amber)" onclick="event.stopPropagation();editRecord('${r.id}')">Edit</button>
-        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete</button>
+        ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--amber-text);border-color:var(--amber)" onclick="event.stopPropagation();editRecord('${r.id}')">Edit</button>`}
+        ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete</button>`}
       </div>
     </div>`;
   }
@@ -996,7 +1000,7 @@ function buildPersonView(filtered){
         html+=`<div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
             <span class="badge b-blue" style="font-size:11px">${r.vtype.slice(0,40)}</span>
-            <button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0;margin-left:6px" onclick="deleteRecord('${r.id}')">Del</button>
+            ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0;margin-left:6px" onclick="deleteRecord('${r.id}')">Del</button>`}
           </div>
           ${r.pts>0?`<span class="badge b-amber">${r.pts} pts</span>`:''}
           <div style="margin-top:5px">${buildLicenseStatusBlock(r)}</div>
@@ -1284,7 +1288,7 @@ function renderData(){
 </div>
 <div class="card" style="margin-top:10px;border-color:var(--red)"><p class="sec" style="color:var(--red)">Danger zone</p>
   <p class="hint" style="margin-bottom:10px">Permanently delete all locally stored records. Export first.</p>
-  <button class="btn btn-red" onclick="clearAll()">Delete all records</button>
+  ${isReadOnly()?'<p style="font-size:13px;color:var(--text3)">Read-only access — delete not available.</p>':`<button class="btn btn-red" onclick="clearAll()">Delete all records</button>`}
 </div>`;
   // Populate person select
   const psel=document.getElementById('pdf-person-sel');
@@ -1744,14 +1748,19 @@ function onLoginSuccess(officer){
   const bar=document.getElementById('session-bar');
   const lbl=document.getElementById('session-label');
   if(bar){bar.style.display='flex';}
+  const ro=READONLY_ROLES.includes(officer);
   if(lbl){
     if(officer==='ADMIN'){
       lbl.innerHTML='<span style="background:rgba(255,255,255,.25);padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px">ADMIN</span>Full access';
+    } else if(ro){
+      lbl.innerHTML=officer+' <span style="background:rgba(255,255,255,.2);padding:2px 7px;border-radius:10px;font-size:11px;margin-left:4px">Read-only</span>';
     } else {
       lbl.textContent=officer+' · Signed in';
     }
   }
-  // Pre-fill officer field and lock it
+  // Hide New tab for read-only users
+  const navNew=document.getElementById('nav-new');
+  if(navNew){navNew.style.display=ro?'none':'flex';}
   setPage('dash');
 }
 
