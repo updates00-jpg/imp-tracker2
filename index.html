@@ -20,9 +20,9 @@ html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSy
 .header h1{font-size:14px;font-weight:600;color:var(--text)}
 .header p{font-size:11px;color:var(--text2);margin-top:1px}
 .nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;max-width:480px;margin:0 auto}
-.nav-item{flex:1;padding:8px 4px 6px;text-align:center;cursor:pointer;border:none;background:none;color:var(--text2);font-family:inherit}
-.nav-item svg{width:20px;height:20px;display:block;margin:0 auto 2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.nav-item span{font-size:10px;display:block}
+.nav-item{flex:1;padding:8px 4px 6px;text-align:center;cursor:pointer;border:none;background:none;color:var(--text2);font-family:inherit;min-width:0}
+.nav-item svg{width:20px;height:20px;display:block;margin:0 auto 3px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-item span{font-size:10px;display:block;text-align:center;white-space:nowrap;line-height:1}
 .nav-item.active{color:var(--blue)}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
 .sec{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
