@@ -211,6 +211,136 @@ const NATO_RANKS=[
   {g:'OF — Officers',ranks:['OF-1 (Second Lieutenant)','OF-2 (First Lieutenant)','OF-3 (Captain)','OF-4 (Major)','OF-5 (Lieutenant Colonel)','OF-6 (Colonel)','OF-7 (Brigadier General)','OF-8 (Major General)','OF-9 (Lieutenant General)','OF-10 (General)']},
   {g:'Civilian',ranks:['CIV (Civilian)']}
 ];
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
+const SB_URL = 'https://jqamyfxlrtzlkuzvqhbt.supabase.co';
+const SB_KEY = 'sb_publishable_bOzouq892ylHv0putWRyeg_ptdoDotU';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=minimal'
+};
+
+let _syncEnabled = false;
+let _syncInterval = null;
+let _lastSyncTs = 0;
+
+async function sbFetch(path, options){
+  const res = await fetch(SB_URL + path, { ...options, headers: { ...SB_HEADERS, ...(options&&options.headers||{}) } });
+  return res;
+}
+
+// Push single record to Supabase (upsert)
+async function sbUpsertRecord(rec){
+  if(!_syncEnabled) return;
+  try {
+    await sbFetch('/rest/v1/violations', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ id: rec.id, data: rec, updated_at: new Date().toISOString() })
+    });
+  } catch(e){ console.warn('Supabase upsert failed:', e); }
+}
+
+// Delete single record from Supabase
+async function sbDeleteRecord(id){
+  if(!_syncEnabled) return;
+  try {
+    await sbFetch('/rest/v1/violations?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch(e){ console.warn('Supabase delete failed:', e); }
+}
+
+// Pull all records from Supabase and merge
+async function sbPullAll(){
+  if(!_syncEnabled) return false;
+  try {
+    const res = await sbFetch('/rest/v1/violations?select=id,data,updated_at&order=updated_at.desc', { method: 'GET' });
+    if(!res.ok) return false;
+    const rows = await res.json();
+    if(!Array.isArray(rows)) return false;
+    let changed = false;
+    const localIds = new Set(records.map(r=>r.id));
+    rows.forEach(row => {
+      const rec = row.data;
+      if(!rec||!rec.id) return;
+      const existIdx = records.findIndex(r=>r.id===rec.id);
+      if(existIdx < 0){ records.push(rec); changed = true; }
+      else {
+        // Update if remote is newer
+        const remoteTs = new Date(row.updated_at).getTime();
+        const localTs = records[existIdx].ts || 0;
+        if(remoteTs > localTs){ records[existIdx] = rec; changed = true; }
+      }
+    });
+    // Find records deleted remotely
+    const remoteIds = new Set(rows.map(r=>r.id));
+    const before = records.length;
+    records = records.filter(r => remoteIds.has(r.id));
+    if(records.length !== before) changed = true;
+    if(changed){ saveData(); _lastSyncTs = Date.now(); }
+    return changed;
+  } catch(e){ console.warn('Supabase pull failed:', e); return false; }
+}
+
+// Push all local records to Supabase (initial sync)
+async function sbPushAll(){
+  if(!_syncEnabled||records.length===0) return;
+  try {
+    const rows = records.map(r=>({ id: r.id, data: r, updated_at: new Date(r.ts||Date.now()).toISOString() }));
+    // Batch upsert in chunks of 50
+    for(let i=0;i<rows.length;i+=50){
+      const chunk = rows.slice(i,i+50);
+      await sbFetch('/rest/v1/violations', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(chunk)
+      });
+    }
+  } catch(e){ console.warn('Supabase push all failed:', e); }
+}
+
+// Check connectivity and start sync
+async function initSync(){
+  try {
+    const res = await sbFetch('/rest/v1/violations?select=id&limit=1', { method: 'GET' });
+    if(res.ok){
+      _syncEnabled = true;
+      updateSyncStatus('syncing');
+      // Pull remote records first
+      const changed = await sbPullAll();
+      // Push any local records that might not be remote
+      await sbPushAll();
+      updateSyncStatus('online');
+      if(changed){ renderDash(); if(currentPage==='records') renderRecords(); }
+      // Poll every 15 seconds for new records from other devices
+      _syncInterval = setInterval(async ()=>{
+        const ch = await sbPullAll();
+        if(ch){ renderDash(); if(currentPage==='records') renderRecords(); updateSyncStatus('online'); }
+      }, 15000);
+    } else {
+      updateSyncStatus('offline');
+    }
+  } catch(e){
+    _syncEnabled = false;
+    updateSyncStatus('offline');
+  }
+}
+
+function updateSyncStatus(status){
+  const lbl = document.getElementById('session-label');
+  if(!lbl) return;
+  const officer = getCurrentOfficer()||'';
+  const ro = READONLY_ROLES.includes(officer);
+  const adminBadge = isAdmin() ? '<span style="background:rgba(255,255,255,.25);padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px">ADMIN</span>' : '';
+  const roBadge = ro ? '<span style="background:rgba(255,255,255,.2);padding:2px 7px;border-radius:10px;font-size:11px;margin-left:4px">Read-only</span>' : '';
+  const syncDot = status==='online'
+    ? '<span style="display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;margin-left:6px" title="Synced"></span>'
+    : status==='syncing'
+    ? '<span style="display:inline-block;width:7px;height:7px;background:#facc15;border-radius:50%;margin-left:6px" title="Syncing..."></span>'
+    : '<span style="display:inline-block;width:7px;height:7px;background:rgba(255,255,255,.35);border-radius:50%;margin-left:6px" title="Offline"></span>';
+  lbl.innerHTML = adminBadge + officer + roBadge + syncDot;
+}
+
 // ─── OFFICER CREDENTIALS ─────────────────────────────────────────────────────
 const OFFICER_PINS={
   'IMP-1':'1111','IMP-2':'2222','IMP-3':'3333','IMP-4':'4444','IMP-5':'5555',
@@ -367,109 +497,114 @@ function renderDash(){
   const people={};
   records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
   const pList=Object.values(people);
+  const suspendedPeople=pList.filter(p=>isPersonCurrentlySuspended(p.oid));
   const nearLimit=pList.filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!isPersonCurrentlySuspended(p.oid);});
   const total=records.length;
-  const totalPts=records.reduce((s,r)=>s+(r.pts||0),0);
+  const totalPersons=uniqueOids.length;
   const drivingCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving').length;
   const conductCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct').length;
-
-  // Today and this week counts
-  const now=Date.now();
   const todayStart=new Date();todayStart.setHours(0,0,0,0);
   const weekStart=new Date(todayStart);weekStart.setDate(weekStart.getDate()-7);
   const todayCount=records.filter(r=>r.ts>=todayStart.getTime()).length;
   const weekCount=records.filter(r=>r.ts>=weekStart.getTime()).length;
-
-  // Most frequent violation
   const vtypeCount={};
   records.forEach(r=>{vtypeCount[r.vtype]=(vtypeCount[r.vtype]||0)+1;});
   const topVtype=Object.entries(vtypeCount).sort((a,b)=>b[1]-a[1])[0];
-
-  // Top 5 people by pts for bar chart
   const topPeople=pList.map(p=>({...p,pts:totalPtsForPerson(p.oid),susp:isPersonCurrentlySuspended(p.oid),count:records.filter(r=>r.oid===p.oid).length}))
     .sort((a,b)=>b.pts-a.pts||b.count-a.count).slice(0,5);
   const maxPts=topPeople.length?Math.max(...topPeople.map(p=>p.pts),1):1;
-
-  // Driving vs conduct bar
   const drivingPct=total?Math.round(drivingCount/total*100):0;
 
   let html='';
 
+  // ── COMPACT HEADER ──
+  html+=`<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+    <img src="${typeof EUFOR_LOGO!=='undefined'?EUFOR_LOGO:''}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0" alt="EUFOR"/>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">Camp Butmir — IMP Tracker</div>
+      <div style="font-size:11px;color:var(--text2)">Offline · NATO/EUFOR · SOP 3901</div>
+    </div>
+  </div>`;
+
   // ── STATUS BAR ──
   html+=`<div style="background:var(--blue);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-    <span style="color:#fff;font-size:13px;font-weight:600">${total} records</span>
-    <span style="color:rgba(255,255,255,.7);font-size:12px">${suspCount} suspended · ${totalPts} pts · ${nearLimit.length} near limit</span>
+    <span style="color:#fff;font-size:13px;font-weight:600">${total} records · ${totalPersons} persons</span>
+    <span style="color:rgba(255,255,255,.75);font-size:12px">${suspCount} suspended · ${nearLimit.length} near limit</span>
   </div>`;
 
-  // ── 4 STAT CARDS ──
-  html+=`<div class="dash-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-    <div class="dash-card" onclick="setPage('records');_filterMode='all'">
-      <div class="dash-num blue">${total}</div><div class="dash-lbl">Total records</div>
-    </div>
-    <div class="dash-card" onclick="setPage('records');_filterMode='suspended'">
-      <div class="dash-num red">${suspCount}</div><div class="dash-lbl">Suspended</div>
-    </div>
-    <div class="dash-card">
-      <div class="dash-num" style="color:var(--text)">${todayCount}</div>
-      <div class="dash-lbl">Today · <span style="color:var(--text2)">${weekCount} this week</span></div>
-    </div>
-    <div class="dash-card">
-      <div class="dash-num amber">${nearLimit.length}</div><div class="dash-lbl">Near limit (4+ pts)</div>
-    </div>
-  </div>`;
-
-  // ── TOP VIOLATORS BAR CHART ──
-  if(topPeople.length>0){
-    html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Top violators — penalty points</p>`;
-    topPeople.forEach(p=>{
-      const pct=maxPts>0?Math.round(p.pts/maxPts*100):0;
-      const barColor=p.susp?'var(--red)':p.pts>=4?'var(--amber)':'var(--blue)';
-      const statusBadge=p.susp?'<span style="font-size:10px;color:var(--red-text);background:var(--red-bg);padding:1px 5px;border-radius:8px;font-weight:600">SUSP</span>':
-        p.pts>=4?'<span style="font-size:10px;color:var(--amber-text);background:var(--amber-bg);padding:1px 5px;border-radius:8px">⚠</span>':'';
-      html+=`<div style="margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-size:12px;font-weight:500;color:var(--text)">${p.first} ${p.last} ${statusBadge}</span>
-          <span style="font-size:11px;color:var(--text2)">${p.pts} pts · ${p.count} violations</span>
+  // ── PRIORITY ALERTS — SUSPENDED ──
+  if(suspendedPeople.length>0){
+    html+=`<div class="card" style="border-color:var(--red);margin-bottom:10px">
+      <p class="sec" style="color:var(--red)">🔴 License suspended</p>`;
+    suspendedPeople.forEach(p=>{
+      const recs=records.filter(r=>r.oid===p.oid);
+      const suspRec=recs.find(r=>{const s=getLicenseStatusAt(r.id);return s.isThresholdRecord;});
+      const suspInfo=suspRec?`${suspRec.suspDuration||''}${suspRec.suspUntil?' · until '+suspRec.suspUntil:''}`:'';
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--red-text);flex-shrink:0">${(p.first[0]||'')+(p.last[0]||'')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${p.rank} ${p.first} ${p.last}</div>
+          <div style="font-size:11px;color:var(--red-text);font-weight:500">${suspInfo||'Suspended'}</div>
+          <div style="font-size:11px;color:var(--text3)">${p.unit||'—'}</div>
         </div>
-        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .4s"></div>
+        <button class="btn btn-sm" style="font-size:11px;flex-shrink:0" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';_filterMode='all';renderRecords()">View →</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── PRIORITY ALERTS — NEAR LIMIT ──
+  if(nearLimit.length>0){
+    html+=`<div class="card" style="border-color:var(--amber);margin-bottom:10px">
+      <p class="sec" style="color:var(--amber)">⚠ Approaching suspension</p>`;
+    nearLimit.forEach(p=>{
+      const t=totalPtsForPerson(p.oid);
+      const pct=Math.round(t/5*100);
+      html+=`<div style="padding:8px 0;border-bottom:0.5px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${p.rank} ${p.first} ${p.last}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.unit||'—'} · ${5-t} pt${5-t!==1?'s':''} until suspension</div>
+          </div>
+          <span style="font-size:18px;font-weight:700;color:var(--amber);margin-left:8px">${t}/5</span>
+        </div>
+        <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--amber);border-radius:3px"></div>
         </div>
       </div>`;
     });
     html+=`</div>`;
   }
 
-  // ── VIOLATION BREAKDOWN ──
-  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Violation breakdown</p>
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:12px;color:var(--text2)">Driving <b style="color:var(--text)">${drivingCount}</b></span>
-        <span style="font-size:12px;color:var(--text2)">Conduct <b style="color:var(--text)">${conductCount}</b></span>
-      </div>
-      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;display:flex">
-        <div style="height:100%;width:${drivingPct}%;background:var(--blue);transition:width .4s"></div>
-        <div style="height:100%;flex:1;background:var(--green)"></div>
-      </div>
-      <div style="display:flex;gap:12px;margin-top:4px">
-        <span style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--blue);border-radius:2px;display:inline-block"></span>Driving ${drivingPct}%</span>
-        <span style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>Conduct ${100-drivingPct}%</span>
-      </div>
+  // ── 2 STAT CARDS (Today + Near limit count already in alerts) ──
+  html+=`<div class="dash-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="dash-card" onclick="setPage('records');_filterMode='all'">
+      <div class="dash-num" style="color:var(--text)">${todayCount}</div>
+      <div class="dash-lbl">Today · <span style="color:var(--text2);font-size:10px">${weekCount} this week</span></div>
     </div>
-    ${topVtype?`<div style="padding:8px 10px;background:var(--bg2);border-radius:var(--rsm)">
-      <span style="font-size:11px;color:var(--text2)">Most frequent: </span>
-      <span style="font-size:12px;font-weight:500;color:var(--text)">${topVtype[0].slice(0,40)} · ${topVtype[1]}x</span>
-    </div>`:''}
+    <div class="dash-card" onclick="setPage('records');_filterMode='all';_sortMode='pts'">
+      <div class="dash-num blue">${totalPersons}</div>
+      <div class="dash-lbl">Persons in database</div>
+    </div>
   </div>`;
 
-  // ── NEAR LIMIT ALERT ──
-  if(nearLimit.length>0){
-    html+=`<div class="card" style="border-color:var(--amber);margin-bottom:10px"><p class="sec" style="color:var(--amber)">⚠ Approaching suspension</p>`;
-    nearLimit.forEach(p=>{
-      const t=totalPtsForPerson(p.oid);
-      html+=`<div class="warn-item">
-        <div class="warn-pts">${t}</div>
-        <div><div class="warn-name">${p.rank} ${p.first} ${p.last}</div>
-        <div class="warn-sub">${p.unit||'—'} · ${5-t} pt${5-t!==1?'s':''} until suspension</div></div>
+  // ── TOP VIOLATORS ──
+  if(topPeople.length>0){
+    html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Top violators — penalty points</p>`;
+    topPeople.forEach(p=>{
+      const pct=maxPts>0?Math.round(p.pts/maxPts*100):0;
+      const barColor=p.susp?'var(--red)':p.pts>=4?'var(--amber)':'var(--blue)';
+      const statusBadge=p.susp
+        ?'<span style="font-size:10px;color:var(--red-text);background:var(--red-bg);padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px">SUSP</span>'
+        :p.pts>=4?'<span style="font-size:10px;color:var(--amber-text);background:var(--amber-bg);padding:1px 6px;border-radius:8px;margin-left:4px">⚠</span>':'';
+      html+=`<div style="margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:500;color:var(--text)">${p.first} ${p.last}${statusBadge}</span>
+          <span style="font-size:11px;color:var(--text2)">${p.pts} pts · ${p.count}x · ${p.unit||'—'}</span>
+        </div>
+        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px"></div>
+        </div>
       </div>`;
     });
     html+=`</div>`;
@@ -477,7 +612,7 @@ function renderDash(){
 
   // ── RECENT 3 RECORDS ──
   const recent=records.slice(0,3);
-  html+=`<div class="card"><p class="sec">Recent records</p>`;
+  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Recent records</p>`;
   if(recent.length===0){
     html+=`<div class="empty" style="padding:16px">No records yet.</div>`;
   } else {
@@ -493,8 +628,30 @@ function renderDash(){
   }
   html+=`</div>`;
 
+  // ── VIOLATION BREAKDOWN (bottom, less critical) ──
+  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Violation breakdown</p>
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">Driving <b style="color:var(--text)">${drivingCount}</b></span>
+        <span style="font-size:12px;color:var(--text2)">Conduct <b style="color:var(--text)">${conductCount}</b></span>
+      </div>
+      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;display:flex">
+        <div style="height:100%;width:${drivingPct}%;background:var(--blue)"></div>
+        <div style="height:100%;flex:1;background:var(--green)"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:5px">
+        <span style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--blue);border-radius:2px;display:inline-block"></span>Driving ${drivingPct}%</span>
+        <span style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>Conduct ${100-drivingPct}%</span>
+      </div>
+    </div>
+    ${topVtype?`<div style="padding:7px 10px;background:var(--bg2);border-radius:var(--rsm)">
+      <span style="font-size:11px;color:var(--text2)">Most frequent: </span>
+      <span style="font-size:12px;font-weight:500;color:var(--text)">${topVtype[0].slice(0,38)} · ${topVtype[1]}x</span>
+    </div>`:''}
+  </div>`;
+
   if(records.length>0){
-    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:6px">View all records →</button>`;
+    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:2px;margin-bottom:8px">View all records →</button>`;
   }
 
   document.getElementById('page-dash').innerHTML=html;
@@ -804,8 +961,9 @@ function submitRecord(){
   }
   const notify=(vd&&vd.notify)?vd.notify:[];
   const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),rank,first,last,unit,vtype,occur,notes,officer,date:date||new Date().toISOString(),speed:speed||'',pts,susp,suspDuration,suspUntil,notify,oid,ts:Date.now()};
-  records.unshift(rec);saveData();
+  records.unshift(rec);saveData();sbUpsertRecord(rec);
   if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
+  sbUpsertRecord(rec);
   const action=getActionForOccurrence(vtype,occur);
   let msg='';
   if(susp){
@@ -1055,6 +1213,7 @@ function confirmPIN(id){
     document.getElementById('pin-modal').remove();
     records=records.filter(r=>r.id!==id);
     saveData();
+    sbDeleteRecord(id);
     if(_viewMode==='person')_expandedPerson=null;else _expandedId=null;
     refreshList();
     renderDash();
@@ -1245,6 +1404,7 @@ function importSingleRecord(rec,resultId){
   if(records.find(r=>r.id===rec.id)){if(el)el.innerHTML='<div class="import-already">Record already exists. No duplicate added.</div>';return;}
   records.unshift(rec);saveData();
   if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
+  sbUpsertRecord(rec);
   const d=new Date(rec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600;margin-bottom:3px">Imported successfully</p><p>${rec.rank} ${rec.first} ${rec.last}</p><p>${rec.vtype} · ${d}</p>${rec.susp?'<p style="color:var(--red-text);font-weight:600;margin-top:3px">License suspended</p>':''}</div>`;
 }
@@ -1288,7 +1448,10 @@ function renderData(){
   <div id="import-result" style="margin-top:8px"></div>
 </div>
 <div class="card" style="margin-top:10px"><p class="sec">Session &amp; database info</p>
-  <p class="hint">Signed in as: <b>${getCurrentOfficer()||'—'}</b>${isAdmin()?' <span style="background:var(--amber-bg);color:var(--amber-text);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">ADMIN · Full access</span>':''}<br>Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b><br>Data is stored locally on this device only.</p>
+  <p class="hint">Signed in as: <b>${getCurrentOfficer()||'—'}</b>${isAdmin()?' <span style="background:var(--amber-bg);color:var(--amber-text);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">ADMIN · Full access</span>':''}<br>
+  Sync status: <b>${_syncEnabled?'<span style="color:#16a34a">Online — syncing with Supabase</span>':'<span style="color:var(--amber-text)">Offline — local only</span>'}</b><br>
+  Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b></p>
+  <button class="btn" style="margin-top:8px" onclick="manualSync()">Force sync now</button>
   <button class="btn" style="margin-top:10px;color:var(--red);border-color:var(--red)" onclick="showLogout()">Sign out</button>
 </div>
 <div class="card" style="margin-top:10px;border-color:var(--red)"><p class="sec" style="color:var(--red)">Danger zone</p>
@@ -1378,6 +1541,7 @@ function applyImport(imported,mode,resultId){
     records=valid;
     records.sort((a,b)=>(b.ts||0)-(a.ts||0));
     saveData();
+    if(_syncEnabled) records.forEach(r=>sbUpsertRecord(r));
     if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">Database replaced.</p><p>${records.length} records loaded.${invalid>0?' '+invalid+' incomplete record(s) skipped.':''}</p></div>`;
     renderData();renderDash();
   } else {
@@ -1425,7 +1589,12 @@ function confirmClearAll(){
   const err=document.getElementById('pin-err');
   if(input.value==='2685'){
     document.getElementById('pin-modal').remove();
+    const ids=[...records.map(r=>r.id)];
     records=[];saveData();
+    // Delete all from Supabase
+    if(_syncEnabled){
+      ids.forEach(id=>sbDeleteRecord(id));
+    }
     alert('All records deleted.');
     renderData();renderDash();
   } else {
@@ -1767,12 +1936,17 @@ function onLoginSuccess(officer){
   const navNew=document.getElementById('nav-new');
   if(navNew){navNew.style.display=ro?'none':'flex';}
   setPage('dash');
+  // Start Supabase sync
+  updateSyncStatus('syncing');
+  initSync();
 }
 
 function showLogout(){
   if(!confirm('Sign out of '+getCurrentOfficer()+'?'))return;
   clearSession();
-  // Clear officer select
+  // Stop sync
+  if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
+  _syncEnabled=false;
   const sel=document.getElementById('f-officer-sel');
   if(sel)sel.value='';
   const bar=document.getElementById('session-bar');
@@ -1902,6 +2076,7 @@ function saveEditRecord(id){
     editedBy:getCurrentOfficer()||'Unknown'
   };
   saveData();
+  sbUpsertRecord(records[idx]);
   document.getElementById('edit-modal').remove();
   _expandedId=id;
   refreshList();
@@ -1987,6 +2162,23 @@ function stopMic(){
 
 // Stop mic when navigating away from New tab
 const _origSetPage = setPage;
+// ─── MANUAL SYNC ─────────────────────────────────────────────────────────────
+async function manualSync(){
+  updateSyncStatus('syncing');
+  renderData(); // refresh to show syncing
+  const changed = await sbPullAll();
+  await sbPushAll();
+  updateSyncStatus(_syncEnabled?'online':'offline');
+  renderData();
+  if(changed){
+    renderDash();
+    if(currentPage==='records') renderRecords();
+    alert('Sync complete. Records updated.');
+  } else {
+    alert('Sync complete. Already up to date.');
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadData();
 checkLogin();
