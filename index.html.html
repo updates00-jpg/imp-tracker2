@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="IMP Tracker"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>Camp Butmir — IMP Violation Tracker</title>
+<style>
+:root{--bg:#fff;--bg2:#f5f5f4;--bg3:#eeede9;--text:#1a1a19;--text2:#6b6b68;--text3:#999994;--border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.22);--radius:10px;--rsm:7px;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;--green:#3B6D11;--green-bg:#EAF3DE;--green-text:#27500A;--red:#A32D2D;--red-bg:#FCEBEB;--red-text:#791F1F;--amber:#854F0B;--amber-bg:#FAEEDA;--amber-text:#633806;--gray-bg:#F1EFE8;--gray-text:#5F5E5A}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0efe8;--text2:#a0a09a;--text3:#6b6b66;--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);--blue:#378ADD;--blue-bg:#042C53;--blue-text:#B5D4F4;--green:#639922;--green-bg:#173404;--green-text:#C0DD97;--red:#E24B4A;--red-bg:#501313;--red-text:#F7C1C1;--amber:#EF9F27;--amber-bg:#412402;--amber-text:#FAC775;--gray-bg:#2C2C2A;--gray-text:#B4B2A9}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text)}
+.app{max-width:480px;margin:0 auto;padding:12px 12px 90px;min-height:100vh}
+.header{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.header-icon{width:38px;height:38px;background:var(--blue);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-icon svg{width:20px;height:20px;fill:white}
+.header h1{font-size:14px;font-weight:600;color:var(--text)}
+.header p{font-size:11px;color:var(--text2);margin-top:1px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;max-width:480px;margin:0 auto}
+.nav-item{flex:1;padding:6px 2px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text2);font-family:inherit;min-width:0}
+.nav-item svg{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-item span{font-size:10px;white-space:nowrap;line-height:1}
+.nav-item.active{color:var(--blue)}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.sec{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn:active{opacity:.7}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{width:auto;padding:5px 10px;font-size:12px}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{margin:0}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-right:3px;margin-bottom:3px}
+.b-red{background:var(--red-bg);color:var(--red-text)}
+.b-amber{background:var(--amber-bg);color:var(--amber-text)}
+.b-blue{background:var(--blue-bg);color:var(--blue-text)}
+.b-green{background:var(--green-bg);color:var(--green-text)}
+.b-gray{background:var(--gray-bg);color:var(--gray-text)}
+.s-susp{background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--red-text);font-weight:600;margin-top:7px}
+.s-ok{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--green-text);font-weight:600;margin-top:7px}
+.s-warn{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:7px 11px;font-size:12px;color:var(--amber-text);font-weight:600;margin-top:7px}
+.hint{font-size:13px;color:var(--text2);line-height:1.6}
+.login-screen{position:fixed;inset:0;background:var(--bg3);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:28px 22px;width:100%;max-width:340px;text-align:center}
+.login-logo{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;display:block}
+.login-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
+.login-sel{width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit;margin-bottom:10px;appearance:none;-webkit-appearance:none}
+.login-pin{width:100%;padding:13px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:24px;letter-spacing:8px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px}
+.login-pin:focus{border-color:var(--blue)}
+.session-bar{background:var(--blue);padding:6px 14px;display:flex;justify-content:space-between;align-items:center;max-width:480px;margin:0 auto}
+.session-bar span{color:#fff;font-size:12px;font-weight:500}
+.session-bar button{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:11px;padding:3px 9px;border-radius:20px;cursor:pointer;font-family:inherit}
+.edit-badge{font-size:10px;color:var(--text3);margin-top:4px;font-style:italic}
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mic-btn svg{width:16px;height:16px;fill:var(--text2)}
+.mic-btn.listening{background:var(--red);border-color:var(--red);animation:pulse 1s infinite}
+.mic-btn.listening svg{fill:white}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(163,45,45,.4)}50%{box-shadow:0 0 0 6px rgba(163,45,45,0)}}
+.mic-status{font-size:11px;color:var(--text3);margin-top:3px;min-height:15px}
+.ac-wrap{position:relative}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--blue);border-radius:var(--rsm);z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:180px;overflow-y:auto;margin-top:2px}
+.ac-item{padding:10px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item:active{background:var(--blue-bg)}
+.ac-name{font-weight:600}
+.ac-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.person-banner{border-radius:var(--rsm);padding:10px 12px;margin-bottom:12px;font-size:13px;line-height:1.6}
+.person-banner.warn{background:var(--amber-bg);border:0.5px solid var(--amber);color:var(--amber-text)}
+.person-banner.danger{background:var(--red-bg);border:0.5px solid var(--red);color:var(--red-text)}
+.person-banner.info{background:var(--blue-bg);border:0.5px solid var(--blue);color:var(--blue-text)}
+.pb-title{font-weight:600;margin-bottom:3px}
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+/* Dashboard */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.dash-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer}
+.dash-card:active{opacity:.7}
+.dash-num{font-size:28px;font-weight:600;color:var(--text);line-height:1}
+.dash-lbl{font-size:11px;color:var(--text2);margin-top:4px}
+.dash-num.red{color:var(--red)}
+.dash-num.amber{color:var(--amber)}
+.dash-num.blue{color:var(--blue)}
+.recent-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.recent-item:last-child{border-bottom:none}
+.ri-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ri-dot.red{background:var(--red)}
+.ri-dot.green{background:var(--green)}
+.ri-dot.amber{background:var(--amber)}
+.ri-name{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:0}
+.ri-sub{font-size:11px;color:var(--text3);white-space:nowrap}
+.warn-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.warn-item:last-child{border-bottom:none}
+.warn-pts{font-size:20px;font-weight:600;color:var(--amber);width:32px;text-align:center;flex-shrink:0}
+.warn-name{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.warn-sub{font-size:11px;color:var(--text3)}
+/* Records page */
+.toolbar{display:flex;gap:6px;margin-bottom:10px;align-items:center}
+.search-wrap{position:relative;flex:1}
+.search-bar{width:100%;padding:9px 11px 9px 34px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.search-bar:focus{border-color:var(--blue)}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;width:15px;height:15px}
+.view-btns{display:flex;gap:4px}
+.vbtn{padding:8px 9px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.vbtn svg{width:16px;height:16px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vbtn.active{background:var(--blue-bg);border-color:var(--blue)}
+.vbtn.active svg{stroke:var(--blue)}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.fchip{padding:5px 11px;border:0.5px solid var(--border2);border-radius:20px;background:var(--bg);font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:inherit;transition:background .15s,color .15s,border-color .15s}
+.fchip:hover,.fchip:active{background:var(--bg2);color:var(--text);border-color:var(--border2)}
+.fchip.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.fchip.active:hover,.fchip.active:active{background:#1254a0;color:#fff;border-color:#1254a0}
+.sort-sel{padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:12px;font-family:inherit;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+/* List view */
+.lv-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}
+.lv-item:active{opacity:.8}
+.lv-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.lv-status.susp{background:var(--red)}
+.lv-status.ok{background:var(--green)}
+.lv-status.warn{background:var(--amber)}
+.lv-main{flex:1;min-width:0}
+.lv-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-vtype{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-right{text-align:right;flex-shrink:0}
+.lv-date{font-size:11px;color:var(--text3)}
+.lv-pts{font-size:11px;font-weight:600;color:var(--amber-text);background:var(--amber-bg);padding:2px 6px;border-radius:10px;margin-top:3px;display:inline-block}
+/* Expanded detail */
+.detail-panel{background:var(--bg2);border-radius:var(--rsm);padding:12px;margin-top:4px;margin-bottom:4px}
+/* Person view */
+.pv-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.pv-header{padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.pv-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pv-avatar.susp{background:var(--red-bg);color:var(--red-text)}
+.pv-avatar.warn{background:var(--amber-bg);color:var(--amber-text)}
+.pv-avatar.ok{background:var(--blue-bg);color:var(--blue-text)}
+.pv-info{flex:1;min-width:0}
+.pv-name{font-size:14px;font-weight:600;color:var(--text)}
+.pv-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.pv-pts{font-size:22px;font-weight:700;text-align:right;line-height:1}
+.pv-ptslbl{font-size:10px;color:var(--text3);text-align:right}
+.pv-records{border-top:0.5px solid var(--border);padding:0 14px}
+/* Action steps */
+.action-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rsm);padding:10px 12px;margin-top:8px;font-size:12px;line-height:1.8}
+.action-box p.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:5px}
+/* QR */
+.qr-outer{text-align:center;padding:14px 0}
+.qr-outer canvas,.qr-outer img{border-radius:var(--rsm);border:4px solid white;box-shadow:0 0 0 1px var(--border);display:inline-block}
+.qr-info{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6}
+.scan-area{border:2px dashed var(--border2);border-radius:var(--radius);padding:18px;text-align:center;margin:10px 0}
+.scan-area p{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+#scan-video{width:100%;border-radius:var(--rsm);max-height:240px;object-fit:cover;display:block}
+.import-success{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--rsm);padding:12px;margin-top:8px}
+.import-already{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:10px 12px;margin-top:8px;font-size:13px;color:var(--amber-text)}
+.rec-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:13px;padding:8px;font-family:inherit}
+</style>
+</head>
+<body>
+<div id="session-bar" style="display:none" class="session-bar">
+  <span id="session-label">IMP-1</span>
+  <button onclick="showLogout()">Sign out</button>
+</div>
+<div class="app" id="app">
+  <div class="header">
+    <div style="width:42px;height:42px;flex-shrink:0"><img src="data:image/png;base64,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" style="width:42px;height:42px;border-radius:50%;display:block" alt="EUFOR"/></div>
+    <div><h1>Camp Butmir — IMP Tracker</h1><p>Offline · NATO/EUFOR · SOP 3901</p></div>
+  </div>
+  <div id="page-dash"></div>
+  <div id="page-new" style="display:none"></div>
+  <div id="page-records" style="display:none"></div>
+  <div id="page-qr" style="display:none"></div>
+  <div id="page-data" style="display:none"></div>
+</div>
+<nav class="nav">
+  <button class="nav-item" onclick="setPage('dash')" id="nav-dash">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="nav-item" onclick="setPage('new')" id="nav-new">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>New</span>
+  </button>
+  <button class="nav-item" onclick="setPage('records')" id="nav-records">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Records</span>
+  </button>
+  <button class="nav-item" onclick="setPage('qr')" id="nav-qr">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+    <span>QR Sync</span>
+  </button>
+  <button class="nav-item" onclick="setPage('data')" id="nav-data">
+    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    <span>Data</span>
+  </button>
+</nav>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const NATO_RANKS=[
+  {g:'OR — Other Ranks',ranks:['OR-1 (Private)','OR-2 (Private 2nd Class)','OR-3 (Lance Corporal)','OR-4 (Corporal)','OR-5 (Sergeant)','OR-6 (Staff Sergeant)','OR-7 (Sergeant First Class)','OR-8 (Master Sergeant)','OR-9 (Sergeant Major)']},
+  {g:'OF — Officers',ranks:['OF-1 (Second Lieutenant)','OF-2 (First Lieutenant)','OF-3 (Captain)','OF-4 (Major)','OF-5 (Lieutenant Colonel)','OF-6 (Colonel)','OF-7 (Brigadier General)','OF-8 (Major General)','OF-9 (Lieutenant General)','OF-10 (General)']},
+  {g:'Civilian',ranks:['CIV (Civilian)']}
+];
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
+const SB_URL = 'https://jqamyfxlrtzlkuzvqhbt.supabase.co';
+const SB_KEY = 'sb_publishable_bOzouq892ylHv0putWRyeg_ptdoDotU';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=minimal'
+};
+
+let _syncEnabled = false;
+let _syncInterval = null;
+let _lastSyncTs = 0;
+
+async function sbFetch(path, options){
+  const res = await fetch(SB_URL + path, { ...options, headers: { ...SB_HEADERS, ...(options&&options.headers||{}) } });
+  return res;
+}
+
+// Push single record to Supabase (upsert)
+async function sbUpsertRecord(rec){
+  if(!_syncEnabled) return;
+  try {
+    await sbFetch('/rest/v1/violations', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ id: rec.id, data: rec, updated_at: new Date().toISOString() })
+    });
+  } catch(e){ console.warn('Supabase upsert failed:', e); }
+}
+
+// Delete single record from Supabase
+async function sbDeleteRecord(id){
+  if(!_syncEnabled) return;
+  try {
+    await sbFetch('/rest/v1/violations?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch(e){ console.warn('Supabase delete failed:', e); }
+}
+
+// Pull all records from Supabase and merge
+async function sbPullAll(){
+  if(!_syncEnabled) return false;
+  try {
+    const res = await sbFetch('/rest/v1/violations?select=id,data,updated_at&order=updated_at.desc', { method: 'GET' });
+    if(!res.ok) return false;
+    const rows = await res.json();
+    if(!Array.isArray(rows)) return false;
+    let changed = false;
+    const localIds = new Set(records.map(r=>r.id));
+    rows.forEach(row => {
+      const rec = row.data;
+      if(!rec||!rec.id) return;
+      const existIdx = records.findIndex(r=>r.id===rec.id);
+      if(existIdx < 0){ records.push(rec); changed = true; }
+      else {
+        // Update if remote is newer
+        const remoteTs = new Date(row.updated_at).getTime();
+        const localTs = records[existIdx].ts || 0;
+        if(remoteTs > localTs){ records[existIdx] = rec; changed = true; }
+      }
+    });
+    // Find records deleted remotely
+    const remoteIds = new Set(rows.map(r=>r.id));
+    const before = records.length;
+    records = records.filter(r => remoteIds.has(r.id));
+    if(records.length !== before) changed = true;
+    if(changed){ saveData(); _lastSyncTs = Date.now(); }
+    return changed;
+  } catch(e){ console.warn('Supabase pull failed:', e); return false; }
+}
+
+// Push all local records to Supabase (initial sync)
+async function sbPushAll(){
+  if(!_syncEnabled||records.length===0) return;
+  try {
+    const rows = records.map(r=>({ id: r.id, data: r, updated_at: new Date(r.ts||Date.now()).toISOString() }));
+    // Batch upsert in chunks of 50
+    for(let i=0;i<rows.length;i+=50){
+      const chunk = rows.slice(i,i+50);
+      await sbFetch('/rest/v1/violations', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(chunk)
+      });
+    }
+  } catch(e){ console.warn('Supabase push all failed:', e); }
+}
+
+// Check connectivity and start sync
+async function initSync(){
+  try {
+    const res = await sbFetch('/rest/v1/violations?select=id&limit=1', { method: 'GET' });
+    if(res.ok){
+      _syncEnabled = true;
+      updateSyncStatus('syncing');
+      // Pull remote records first
+      const changed = await sbPullAll();
+      // Push any local records that might not be remote
+      await sbPushAll();
+      updateSyncStatus('online');
+      if(changed){ renderDash(); if(currentPage==='records') renderRecords(); }
+      // Poll every 15 seconds for new records from other devices
+      _syncInterval = setInterval(async ()=>{
+        const ch = await sbPullAll();
+        if(ch){ renderDash(); if(currentPage==='records') renderRecords(); updateSyncStatus('online'); }
+      }, 15000);
+    } else {
+      updateSyncStatus('offline');
+    }
+  } catch(e){
+    _syncEnabled = false;
+    updateSyncStatus('offline');
+  }
+}
+
+function updateSyncStatus(status){
+  const lbl = document.getElementById('session-label');
+  if(!lbl) return;
+  const officer = getCurrentOfficer()||'';
+  const ro = READONLY_ROLES.includes(officer);
+  const adminBadge = isAdmin() ? '<span style="background:rgba(255,255,255,.25);padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px">ADMIN</span>' : '';
+  const roBadge = ro ? '<span style="background:rgba(255,255,255,.2);padding:2px 7px;border-radius:10px;font-size:11px;margin-left:4px">Read-only</span>' : '';
+  const syncDot = status==='online'
+    ? '<span style="display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;margin-left:6px" title="Synced"></span>'
+    : status==='syncing'
+    ? '<span style="display:inline-block;width:7px;height:7px;background:#facc15;border-radius:50%;margin-left:6px" title="Syncing..."></span>'
+    : '<span style="display:inline-block;width:7px;height:7px;background:rgba(255,255,255,.35);border-radius:50%;margin-left:6px" title="Offline"></span>';
+  lbl.innerHTML = adminBadge + officer + roBadge + syncDot;
+}
+
+// ─── OFFICER CREDENTIALS ─────────────────────────────────────────────────────
+const OFFICER_PINS={
+  'IMP-1':'1111','IMP-2':'2222','IMP-3':'3333','IMP-4':'4444','IMP-5':'5555',
+  'IMP-6':'6666','IMP-7':'7777','IMP-8':'8888','IMP-9':'9999','IMP-10':'1010',
+  'IMP-11':'1100','IMP-12':'1200','IMP-13':'1300','IMP-14':'1400','IMP-15':'1500',
+  'FPM (Force Provost Marshall)':'9911',
+  'ADMIN':'2685'
+};
+const READONLY_ROLES=['FPM (Force Provost Marshall)'];
+function isReadOnly(){ return READONLY_ROLES.includes(getCurrentOfficer()); }
+function isAdmin(){ return getCurrentOfficer()==='ADMIN'; }
+let _currentOfficer = null;
+
+function getCurrentOfficer(){
+  if(_currentOfficer) return _currentOfficer;
+  try{ return localStorage.getItem('cbvt_session_officer')||null; }catch(e){return null;}
+}
+function setCurrentOfficer(name){
+  _currentOfficer=name;
+  try{ localStorage.setItem('cbvt_session_officer',name); }catch(e){}
+}
+function clearSession(){
+  _currentOfficer=null;
+  try{ localStorage.removeItem('cbvt_session_officer'); }catch(e){}
+}
+
+const VIOLATIONS={
+  // cat: driving/conduct | pts: penalty points per occurrence
+  // snrFrom: occurrence number from which SNR must be notified
+  // noPts: no penalty points apply (pedestrians, cyclists)
+  // suspend: mandatory license suspension
+  // suspDays / suspEOT: suspension duration
+  'Speeding 5-10 km/h over limit':         {pts:1,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Speeding 11-20 km/h over limit':        {pts:2,cat:'driving',snrFrom:1,suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Speeding 21+ km/h over limit':          {pts:3,cat:'driving',snrFrom:1,suspDays:14,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking in front of Bldg 200 / circle': {pts:3,cat:'driving',snrFrom:1,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Parking violation':                      {pts:0,cat:'driving',snrFrom:3,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Smoking in NATO/EUFOR vehicle':         {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Failure to fasten seatbelt':            {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief']},
+  'Using cellphone during driving':        {pts:2,cat:'driving',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Operating vehicle under alcohol/drugs': {pts:0,cat:'driving',snrFrom:1,suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Causing damage to EUFOR/NATO vehicle':  {pts:0,cat:'driving',snrFrom:1,suspend:true,suspEOT:true,notify:['SNR/Branch Chief','FPM','HQ CAMP CMDT']},
+  'Failure to report to IMP':              {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Uncooperative behaviour to IMP':        {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Dress prescription violation':          {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Alcohol prescription violation':        {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','HQ CAMP CMDT','FPM']},
+  'Weapon carry prescription violation':   {pts:0,cat:'conduct',snrFrom:1,notify:['SNR/Branch Chief','FPM']},
+  'Pedestrian violation':                  {pts:0,cat:'conduct',noPts:true,snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Bicycle/scooter violation':             {pts:0,cat:'conduct',noPts:true,snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Quiet hours violation':                 {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']},
+  'Not carrying ID card (visible place)':  {pts:0,cat:'conduct',snrFrom:3,notify:['SNR/Branch Chief','FPM']},
+  'Not carrying ID card in Camp Butmir':   {pts:0,cat:'conduct',snrFrom:2,notify:['SNR/Branch Chief','FPM']}
+};
+
+let records=[];
+let scanStream=null,scanInterval=null,currentPage='dash';
+let _searchFilter='',_sortMode='newest',_filterMode='all',_viewMode='list',_expandedId=null,_expandedPerson=null;
+
+function loadData(){try{const d=localStorage.getItem('cbvt_v3');if(d)records=JSON.parse(d);}catch(e){}}
+function saveData(){try{localStorage.setItem('cbvt_v3',JSON.stringify(records));}catch(e){}}
+function totalPtsForPerson(oid){return records.filter(r=>r.oid===oid).reduce((s,r)=>s+(r.pts||0),0);}
+
+function occurrenceCount(oid, vtype){
+  return records.filter(r=>r.oid===oid && r.vtype===vtype).length;
+}
+
+function getPersonTimeline(oid){
+  // Returns all records for this person sorted chronologically (oldest first)
+  return records.filter(r=>r.oid===oid).sort((a,b)=>(a.ts||0)-(b.ts||0));
+}
+
+function getLicenseStatusAt(recordId){
+  // Calculate license status dynamically at the moment a specific record was created
+  // Returns {suspended, pts, reason, suspendedFrom}
+  const rec = records.find(r=>r.id===recordId);
+  if(!rec) return {suspended:false, pts:0, reason:''};
+
+  const timeline = getPersonTimeline(rec.oid);
+  let runningPts = 0;
+  let suspended = false;
+  let suspendedFrom = null;
+  let reason = '';
+
+  for(const r of timeline){
+    const vd = VIOLATIONS[r.vtype]||{};
+    // Check mandatory suspension (alcohol, damage)
+    if(vd.suspend){
+      if(!suspended){ suspended=true; suspendedFrom=r.id; reason='mandatory'; }
+    }
+    // Add penalty points
+    runningPts += (r.pts||0);
+    // Check 5-point threshold
+    if(runningPts>=5 && !suspended){
+      suspended=true; suspendedFrom=r.id; reason='5pts';
+    }
+    // Stop when we reach the record we're evaluating
+    if(r.id===recordId) break;
+  }
+
+  return {
+    suspended,
+    pts: runningPts,
+    reason,
+    suspendedFrom,
+    isThresholdRecord: suspendedFrom===recordId
+  };
+}
+
+function isPersonCurrentlySuspended(oid){
+  const timeline = getPersonTimeline(oid);
+  let pts=0, suspended=false;
+  for(const r of timeline){
+    const vd=VIOLATIONS[r.vtype]||{};
+    if(vd.suspend) suspended=true;
+    pts+=(r.pts||0);
+    if(pts>=5) suspended=true;
+  }
+  return suspended;
+}
+
+function getActionForOccurrence(vtype, occNum){
+  // Returns {action, notifySNR, isSNR} based on violation type and occurrence number
+  const vd=VIOLATIONS[vtype];
+  if(!vd)return{action:'File IMP Occurrence Report.',notifySNR:false};
+  const isSNR = occNum >= (vd.snrFrom||1);
+  if(vd.suspend){
+    return{action:'LICENSE SUSPENDED. Confiscate driving permit immediately.',notifySNR:true,isSNR:true};
+  }
+  if(isSNR){
+    return{action:`Occurrence #${occNum} — Notify SNR/Branch Chief. File IMP Report.`,notifySNR:true,isSNR:true};
+  }
+  return{action:`Occurrence #${occNum} — IMP warning only. File IMP Occurrence Report.`,notifySNR:false,isSNR:false};
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function setPage(p){
+  currentPage=p;stopScan();stopMic();
+  ['dash','new','records','qr','data'].forEach(n=>{
+    document.getElementById('page-'+n).style.display=n===p?'block':'none';
+    const nav=document.getElementById('nav-'+n);if(nav)nav.classList.toggle('active',n===p);
+  });
+  if(p==='dash')renderDash();
+  if(p==='new')renderNew();
+  if(p==='records')renderRecords();
+  if(p==='qr')renderQR();
+  if(p==='data')renderData();
+  window.scrollTo(0,0);
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDash(){
+  const uniqueOids=[...new Set(records.map(r=>r.oid))];
+  const suspCount=uniqueOids.filter(o=>isPersonCurrentlySuspended(o)).length;
+  const people={};
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
+  const pList=Object.values(people);
+  const suspendedPeople=pList.filter(p=>isPersonCurrentlySuspended(p.oid));
+  const nearLimit=pList.filter(p=>{const t=totalPtsForPerson(p.oid);return t>=4&&!isPersonCurrentlySuspended(p.oid);});
+  const total=records.length;
+  const totalPersons=uniqueOids.length;
+  const drivingCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving').length;
+  const conductCount=records.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct').length;
+  const todayStart=new Date();todayStart.setHours(0,0,0,0);
+  const weekStart=new Date(todayStart);weekStart.setDate(weekStart.getDate()-7);
+  const todayCount=records.filter(r=>r.ts>=todayStart.getTime()).length;
+  const weekCount=records.filter(r=>r.ts>=weekStart.getTime()).length;
+  const vtypeCount={};
+  records.forEach(r=>{vtypeCount[r.vtype]=(vtypeCount[r.vtype]||0)+1;});
+  const topVtype=Object.entries(vtypeCount).sort((a,b)=>b[1]-a[1])[0];
+  const topPeople=pList.map(p=>({...p,pts:totalPtsForPerson(p.oid),susp:isPersonCurrentlySuspended(p.oid),count:records.filter(r=>r.oid===p.oid).length}))
+    .sort((a,b)=>b.pts-a.pts||b.count-a.count).slice(0,5);
+  const maxPts=topPeople.length?Math.max(...topPeople.map(p=>p.pts),1):1;
+  const drivingPct=total?Math.round(drivingCount/total*100):0;
+
+  let html='';
+
+  // ── COMPACT HEADER ──
+  html+=`<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+    <img src="${typeof EUFOR_LOGO!=='undefined'?EUFOR_LOGO:''}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0" alt="EUFOR"/>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">Camp Butmir — IMP Tracker</div>
+      <div style="font-size:11px;color:var(--text2)">Offline · NATO/EUFOR · SOP 3901</div>
+    </div>
+  </div>`;
+
+  // ── STATUS BAR ──
+  html+=`<div style="background:var(--blue);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+    <span style="color:#fff;font-size:13px;font-weight:600">${total} records · ${totalPersons} persons</span>
+    <span style="color:rgba(255,255,255,.75);font-size:12px">${suspCount} suspended · ${nearLimit.length} near limit</span>
+  </div>`;
+
+  // ── PRIORITY ALERTS — SUSPENDED ──
+  if(suspendedPeople.length>0){
+    html+=`<div class="card" style="border-color:var(--red);margin-bottom:10px">
+      <p class="sec" style="color:var(--red)">🔴 License suspended</p>`;
+    suspendedPeople.forEach(p=>{
+      const recs=records.filter(r=>r.oid===p.oid);
+      const suspRec=recs.find(r=>{const s=getLicenseStatusAt(r.id);return s.isThresholdRecord;});
+      const suspInfo=suspRec?`${suspRec.suspDuration||''}${suspRec.suspUntil?' · until '+suspRec.suspUntil:''}`:'';
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--red-text);flex-shrink:0">${(p.first[0]||'')+(p.last[0]||'')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${p.rank} ${p.first} ${p.last}</div>
+          <div style="font-size:11px;color:var(--red-text);font-weight:500">${suspInfo||'Suspended'}</div>
+          <div style="font-size:11px;color:var(--text3)">${p.unit||'—'}</div>
+        </div>
+        <button class="btn btn-sm" style="font-size:11px;flex-shrink:0" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';_filterMode='all';renderRecords()">View →</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── PRIORITY ALERTS — NEAR LIMIT ──
+  if(nearLimit.length>0){
+    html+=`<div class="card" style="border-color:var(--amber);margin-bottom:10px">
+      <p class="sec" style="color:var(--amber)">⚠ Approaching suspension</p>`;
+    nearLimit.forEach(p=>{
+      const t=totalPtsForPerson(p.oid);
+      const pct=Math.round(t/5*100);
+      html+=`<div style="padding:8px 0;border-bottom:0.5px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${p.rank} ${p.first} ${p.last}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.unit||'—'} · ${5-t} pt${5-t!==1?'s':''} until suspension</div>
+          </div>
+          <span style="font-size:18px;font-weight:700;color:var(--amber);margin-left:8px">${t}/5</span>
+        </div>
+        <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--amber);border-radius:3px"></div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── 2 STAT CARDS (Today + Near limit count already in alerts) ──
+  html+=`<div class="dash-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="dash-card" onclick="setPage('records');_filterMode='all'">
+      <div class="dash-num" style="color:var(--text)">${todayCount}</div>
+      <div class="dash-lbl">Today · <span style="color:var(--text2);font-size:10px">${weekCount} this week</span></div>
+    </div>
+    <div class="dash-card" onclick="setPage('records');_filterMode='all';_sortMode='pts'">
+      <div class="dash-num blue">${totalPersons}</div>
+      <div class="dash-lbl">Persons in database</div>
+    </div>
+  </div>`;
+
+  // ── TOP VIOLATORS ──
+  if(topPeople.length>0){
+    html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Top violators — penalty points</p>`;
+    topPeople.forEach(p=>{
+      const pct=maxPts>0?Math.round(p.pts/maxPts*100):0;
+      const barColor=p.susp?'var(--red)':p.pts>=4?'var(--amber)':'var(--blue)';
+      const statusBadge=p.susp
+        ?'<span style="font-size:10px;color:var(--red-text);background:var(--red-bg);padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px">SUSP</span>'
+        :p.pts>=4?'<span style="font-size:10px;color:var(--amber-text);background:var(--amber-bg);padding:1px 6px;border-radius:8px;margin-left:4px">⚠</span>':'';
+      html+=`<div style="margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:500;color:var(--text)">${p.first} ${p.last}${statusBadge}</span>
+          <span style="font-size:11px;color:var(--text2)">${p.pts} pts · ${p.count}x · ${p.unit||'—'}</span>
+        </div>
+        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px"></div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── RECENT 3 RECORDS ──
+  const recent=records.slice(0,3);
+  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Recent records</p>`;
+  if(recent.length===0){
+    html+=`<div class="empty" style="padding:16px">No records yet.</div>`;
+  } else {
+    recent.forEach(r=>{
+      const dot=isPersonCurrentlySuspended(r.oid)?'red':totalPtsForPerson(r.oid)>=4?'amber':'green';
+      const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+      html+=`<div class="recent-item">
+        <div class="ri-dot ${dot}"></div>
+        <div class="ri-name">${r.rank} ${r.first} ${r.last}<br><span style="font-size:11px;color:var(--text2)">${r.vtype.slice(0,38)}</span></div>
+        <div class="ri-sub">${d}</div>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+
+  // ── VIOLATION BREAKDOWN (bottom, less critical) ──
+  html+=`<div class="card" style="margin-bottom:10px"><p class="sec">Violation breakdown</p>
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">Driving <b style="color:var(--text)">${drivingCount}</b></span>
+        <span style="font-size:12px;color:var(--text2)">Conduct <b style="color:var(--text)">${conductCount}</b></span>
+      </div>
+      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;display:flex">
+        <div style="height:100%;width:${drivingPct}%;background:var(--blue)"></div>
+        <div style="height:100%;flex:1;background:var(--green)"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:5px">
+        <span style="font-size:10px;color:var(--blue);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--blue);border-radius:2px;display:inline-block"></span>Driving ${drivingPct}%</span>
+        <span style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>Conduct ${100-drivingPct}%</span>
+      </div>
+    </div>
+    ${topVtype?`<div style="padding:7px 10px;background:var(--bg2);border-radius:var(--rsm)">
+      <span style="font-size:11px;color:var(--text2)">Most frequent: </span>
+      <span style="font-size:12px;font-weight:500;color:var(--text)">${topVtype[0].slice(0,38)} · ${topVtype[1]}x</span>
+    </div>`:''}
+  </div>`;
+
+  if(records.length>0){
+    html+=`<button class="btn" onclick="setPage('records')" style="margin-top:2px;margin-bottom:8px">View all records →</button>`;
+  }
+
+  document.getElementById('page-dash').innerHTML=html;
+}
+
+// ─── NEW RECORD ───────────────────────────────────────────────────────────────
+function renderNew(){
+  let rankOpts='<option value="">Select rank...</option>';
+  NATO_RANKS.forEach(g=>{rankOpts+=`<optgroup label="${g.g}">`;g.ranks.forEach(r=>{rankOpts+=`<option>${r}</option>`;});rankOpts+='</optgroup>';});
+  let vD='<optgroup label="Driving violations">',vC='<optgroup label="Conduct violations">';
+  Object.entries(VIOLATIONS).forEach(([name,v])=>{
+    const lbl=v.suspend?' [LICENSE SUSPENDED]':v.pts>0?` [${v.pts} pt${v.pts>1?'s':''}]`:'';
+    const opt=`<option value="${name}">${name}${lbl}</option>`;
+    if(v.cat==='driving')vD+=opt;else vC+=opt;
+  });
+  vD+='</optgroup>';vC+='</optgroup>';
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  const dt=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('page-new').innerHTML=`
+<div class="card"><p class="sec">Violator details</p>
+  <div class="field"><label>NATO Rank</label><select id="f-rank">${rankOpts}</select></div>
+  <div class="row2">
+    <div class="field"><label>First name</label><input id="f-first" placeholder="John" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()" onfocus="onNameInput()"/></div>
+    <div class="field ac-wrap"><label>Last name</label><input id="f-last" placeholder="Smith" autocomplete="off" oninput="onNameInput();updateOccurrenceBox()" onfocus="onNameInput()"/>
+      <div id="ac-dropdown" class="ac-dropdown" style="display:none"></div>
+    </div>
+  </div>
+  <div id="person-banner"></div>
+  <div class="field"><label>Unit / NSE / Nation</label><input id="f-unit" placeholder="e.g. DEU NSE" autocomplete="off"/></div>
+</div>
+<div class="card"><p class="sec">Violation details</p>
+  <div class="field"><label>Violation type</label>
+    <select id="f-vtype" onchange="onViolChange()"><option value="">Select violation...</option>${vD}${vC}</select>
+  </div>
+  <div id="v-hint"></div>
+  <div class="field" id="spd-wrap" style="display:none"><label>Speed over limit (km/h)</label><input type="number" id="f-speed" min="1" max="200" placeholder="e.g. 15"/></div>
+  <div id="occurrence-box"></div>
+  <div class="field" style="display:none"><select id="f-occur"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+  <div class="field mic-wrap"><label>Location / notes</label>
+    <textarea id="f-notes" placeholder="Location, circumstances, witnesses..." style="padding-right:44px"></textarea>
+    <button type="button" class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Voice input">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zm6 8a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21H9v2h6v-2h-2v-2.07A7 7 0 0 0 19 12h-2z"/></svg>
+    </button>
+    <div class="mic-status" id="mic-status"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Reporting officer</label>
+      <select id="f-officer-sel" onchange="onOfficerChange()">
+        <option value="">Select officer...</option>
+        ${Array.from({length:15},(_,i)=>{const o='IMP-'+(i+1);const cur=getCurrentOfficer();return `<option value="${o}"${cur===o?' selected':''}>${o}</option>`;}).join('')}
+        ${isAdmin()?'<option value="ADMIN" selected>ADMIN</option>':''}
+        <option value="other">Other...</option>
+      </select>
+      <input id="f-officer" placeholder="Enter name..." autocomplete="off" style="margin-top:5px;display:none" value=""/>
+    </div>
+    <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="f-date" value="${dt}"/></div>
+  </div>
+</div>
+<button class="btn btn-primary" onclick="submitRecord()">Save violation record</button>
+<div style="height:8px"></div>`;
+}
+
+function onViolChange(){
+  const v=document.getElementById('f-vtype').value;
+  const hint=document.getElementById('v-hint');
+  document.getElementById('spd-wrap').style.display=v.toLowerCase().includes('speeding')?'block':'none';
+  if(!v){hint.innerHTML='';updateOccurrenceBox();return;}
+  const vd=VIOLATIONS[v];
+  const ns=(vd.notify&&vd.notify.length)?vd.notify.join(', '):'';
+  let hhtml='';
+  if(vd.suspend){
+    const dur=vd.suspEOT?'until EOT':vd.suspDays?`for ${vd.suspDays} days`:'';
+    hhtml=`<div class="s-susp">LICENSE SUSPENDED ${dur}</div>`;
+  } else if(vd.noPts){
+    hhtml=`<span class="badge b-gray">No penalty points (pedestrian/cyclist)</span>`;
+  } else if(vd.pts>0){
+    hhtml=`<span class="badge b-amber">${vd.pts} penalty point(s) per occurrence</span>`;
+  } else {
+    hhtml=`<span class="badge b-gray">Warning / disciplinary only</span>`;
+  }
+  hint.innerHTML=hhtml;
+  updateOccurrenceBox();
+}
+
+function updateOccurrenceBox(){
+  const box=document.getElementById('occurrence-box');
+  const occurSel=document.getElementById('f-occur');
+  if(!box)return;
+  const first=document.getElementById('f-first').value.trim();
+  const last=document.getElementById('f-last').value.trim();
+  const vtype=document.getElementById('f-vtype').value;
+  if(!vtype){box.innerHTML='';return;}
+  const vd=VIOLATIONS[vtype];
+  const oid=(first+'_'+last).toLowerCase().replace(/\s+/g,'_');
+  // Count previous occurrences of this specific violation type for this person
+  const prevCount = (first&&last) ? occurrenceCount(oid, vtype) : 0;
+  const thisOccur = prevCount + 1;
+  // Set hidden select value
+  if(occurSel)occurSel.value=Math.min(thisOccur,5);
+  // Previous records of this type
+  const prevRecs=records.filter(r=>r.oid===oid&&r.vtype===vtype).slice(0,3);
+  const action=getActionForOccurrence(vtype, thisOccur);
+  const snrFrom=vd.snrFrom||1;
+  let cls=action.isSNR?'danger':'info';
+  if(vd.suspend)cls='danger';
+  let html=`<div class="person-banner ${cls}" style="margin-bottom:10px">`;
+  html+=`<div class="pb-title">`;
+  if(vd.suspend){
+    html+=`🚫 This violation requires immediate license suspension`;
+  } else if(action.isSNR){
+    html+=`⚠ Occurrence #${thisOccur} for this violation type — SNR notification required`;
+  } else {
+    html+=`ℹ Occurrence #${thisOccur} for this violation type — IMP warning`;
+  }
+  html+=`</div>`;
+  if(first&&last){
+    if(prevCount===0){
+      html+=`<div>No previous records of this violation for ${first} ${last}.</div>`;
+    } else {
+      html+=`<div>Previous occurrences of this type for ${first} ${last}: <b>${prevCount}</b></div>`;
+      if(prevRecs.length>0){
+        prevRecs.forEach(r=>{
+          const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+          html+=`<div style="font-size:11px;margin-top:2px">→ ${d} · Occ.#${r.occur} · ${r.officer||'—'}</div>`;
+        });
+      }
+    }
+    if(thisOccur<snrFrom){
+      html+=`<div style="margin-top:3px;font-size:12px">SNR notification required from occurrence #${snrFrom}.</div>`;
+    }
+  } else {
+    html+=`<div style="font-size:12px">Enter person's name to auto-calculate occurrence number.</div>`;
+  }
+  html+=`</div>`;
+  box.innerHTML=html;
+}
+
+function highlight(text, query){
+  if(!query) return text;
+  const idx=text.toLowerCase().indexOf(query.toLowerCase());
+  if(idx<0) return text;
+  return text.slice(0,idx)+'<b>'+text.slice(idx,idx+query.length)+'</b>'+text.slice(idx+query.length);
+}
+
+function onNameInput(){
+  const firstEl=document.getElementById('f-first');
+  const lastEl=document.getElementById('f-last');
+  const first=(firstEl?firstEl.value.trim():'').toLowerCase();
+  const last=(lastEl?lastEl.value.trim():'').toLowerCase();
+  const dropdown=document.getElementById('ac-dropdown');
+  const banner=document.getElementById('person-banner');
+  if(!dropdown||!banner)return;
+
+  // Build unique people list
+  const people={};
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
+
+  // Match: if typing in first name field, filter by first name; last name field → last name
+  // Also accept matches on either field for convenience
+  const activeField=document.activeElement;
+  const typingFirst=activeField&&activeField.id==='f-first';
+  const typingLast=activeField&&activeField.id==='f-last';
+  const query=typingFirst?first:typingLast?last:(first||last);
+  const queryField=typingFirst?'first':typingLast?'last':'any';
+
+  if(!query){dropdown.style.display='none';banner.innerHTML='';return;}
+
+  const matches=Object.values(people).filter(p=>{
+    const fl=p.first.toLowerCase(),ll=p.last.toLowerCase();
+    if(queryField==='first') return fl.includes(query);
+    if(queryField==='last') return ll.includes(query);
+    return fl.includes(query)||ll.includes(query);
+  }).sort((a,b)=>a.last.localeCompare(b.last)).slice(0,5);
+
+  if(matches.length>0){
+    dropdown.style.display='block';
+    dropdown.innerHTML=matches.map(p=>{
+      const tp=totalPtsForPerson(p.oid);
+      const rcount=records.filter(r=>r.oid===p.oid).length;
+      const susp=isPersonCurrentlySuspended(p.oid);
+      const icon=susp?'🔴':tp>=4?'🟡':'🟢';
+      const hFirst=queryField==='first'||queryField==='any'?highlight(p.first,query):p.first;
+      const hLast=queryField==='last'||queryField==='any'?highlight(p.last,query):p.last;
+      return `<div class="ac-item" onclick="selectPerson('${p.oid}')">
+        <div class="ac-name">${icon} ${p.rank} ${hFirst} ${hLast}</div>
+        <div class="ac-sub">${p.unit||'—'} · ${rcount} violation${rcount>1?'s':''} · ${tp} pts${susp?' · <b style=color:var(--red-text)>SUSPENDED</b>':''}</div>
+      </div>`;
+    }).join('');
+  } else {
+    dropdown.style.display='none';
+  }
+
+  // Show banner if exact match
+  const exactOid=((firstEl?firstEl.value.trim():'')+' '+(lastEl?lastEl.value.trim():'')).trim().replace(/\s+/g,'_').toLowerCase();
+  const exactOid2=(firstEl?firstEl.value.trim():'').toLowerCase()+'_'+(lastEl?lastEl.value.trim():'').toLowerCase();
+  const exactMatch=Object.values(people).find(p=>p.oid===exactOid2);
+  if(exactMatch){ showPersonBanner(exactMatch); } else { banner.innerHTML=''; }
+}
+
+function onOfficerChange(){
+  const sel=document.getElementById('f-officer-sel');
+  const inp=document.getElementById('f-officer');
+  if(!sel||!inp)return;
+  if(sel.value==='other'){
+    inp.style.display='block';inp.focus();
+  } else {
+    inp.style.display='none';
+    inp.value=sel.value;
+  }
+}
+
+function getOfficerValue(){
+  const sel=document.getElementById('f-officer-sel');
+  const inp=document.getElementById('f-officer');
+  if(sel&&sel.value&&sel.value!=='other') return sel.value;
+  if(inp&&inp.value.trim()) return inp.value.trim();
+  // Fallback to session officer
+  return getCurrentOfficer()||'';
+}
+
+function selectPerson(oid){
+  const people={};
+  records.forEach(r=>{if(!people[r.oid])people[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid};});
+  const p=people[oid];
+  if(!p)return;
+  document.getElementById('f-first').value=p.first;
+  document.getElementById('f-last').value=p.last;
+  document.getElementById('f-rank').value=p.rank;
+  document.getElementById('f-unit').value=p.unit||'';
+  document.getElementById('ac-dropdown').style.display='none';
+  showPersonBanner(p);
+}
+
+function showPersonBanner(p){
+  const banner=document.getElementById('person-banner');
+  if(!banner)return;
+  const tp=totalPtsForPerson(p.oid);
+  const recs=records.filter(r=>r.oid===p.oid);
+  const susp=isPersonCurrentlySuspended(p.oid);
+  const lastRec=recs[0];
+  const lastDate=lastRec?new Date(lastRec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+
+  // Build per-violation-type breakdown
+  const vtypeCounts={};
+  recs.forEach(r=>{vtypeCounts[r.vtype]=(vtypeCounts[r.vtype]||0)+1;});
+
+  let cls='info',icon='ℹ';
+  if(susp){cls='danger';icon='🚫';}
+  else if(tp>=4){cls='warn';icon='⚠';}
+  else if(recs.length>0){cls='warn';icon='⚠';}
+
+  let breakdownHtml='';
+  Object.entries(vtypeCounts).forEach(([vt,cnt])=>{
+    const vd=VIOLATIONS[vt]||{};
+    const snrFrom=vd.snrFrom||1;
+    const nextOccur=cnt+1;
+    const nextIsSnr=nextOccur>=snrFrom;
+    const statusDot=nextIsSnr?'🔴':'🟡';
+    breakdownHtml+=`<div style="font-size:11px;margin-top:3px">${statusDot} <b>${vt.slice(0,40)}</b>: ${cnt}x recorded — next (#${nextOccur}) ${nextIsSnr?'→ <b>SNR notification</b>':'→ warning'}</div>`;
+  });
+
+  banner.innerHTML=`<div class="person-banner ${cls}">
+    <div class="pb-title">${icon} ${p.rank} ${p.first} ${p.last} — already in database</div>
+    <div>${recs.length} violation${recs.length>1?'s':''} on record · ${tp} penalty point${tp!==1?'s':''} · Last: ${lastDate}</div>
+    ${susp?'<div style="font-weight:600;margin-top:4px">🚫 LICENSE CURRENTLY SUSPENDED</div>':''}
+    ${tp>=4&&!susp?'<div style="font-weight:600;margin-top:3px">⚠ '+tp+'/5 points — approaching suspension</div>':''}
+    ${breakdownHtml?'<div style="margin-top:6px;padding-top:6px;border-top:0.5px solid rgba(0,0,0,.1)"><b style="font-size:11px">Per-violation history:</b>'+breakdownHtml+'</div>':''}
+    <div style="margin-top:8px"><button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="setPage('records');_searchFilter='${p.first} ${p.last}';renderRecords();setTimeout(()=>{const si=document.getElementById('search-input');if(si){si.value='${p.first} ${p.last}';}},100)">View all records for this person →</button></div>
+  </div>`;
+
+  // Also update occurrence box now that we have person context
+  updateOccurrenceBox();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  const dd=document.getElementById('ac-dropdown');
+  if(dd&&!dd.contains(e.target)&&e.target.id!=='f-last'&&e.target.id!=='f-first'){dd.style.display='none';}
+});
+
+function submitRecord(){
+  if(isReadOnly()){alert('Read-only access. You cannot add records.');return;}
+  const rank=document.getElementById('f-rank').value;
+  const first=document.getElementById('f-first').value.trim();
+  const last=document.getElementById('f-last').value.trim();
+  const unit=document.getElementById('f-unit').value.trim();
+  const vtype=document.getElementById('f-vtype').value;
+  const occurSel=document.getElementById('f-occur');
+  const occur=occurSel?parseInt(occurSel.value)||1:1;
+  const notes=document.getElementById('f-notes').value.trim();
+  const officer=getOfficerValue();
+  const date=document.getElementById('f-date').value;
+  const speedEl=document.getElementById('f-speed');
+  const speed=speedEl?speedEl.value:'';
+  if(!rank||!first||!last||!vtype){alert('Please fill in rank, name, and violation type.');return;}
+  const vd=VIOLATIONS[vtype],pts=vd?vd.pts:0;
+  const oid=(first+'_'+last).toLowerCase().replace(/\s+/g,'_');
+  const newTotal=totalPtsForPerson(oid)+pts;
+  // susp=true only if THIS record is the one that triggers suspension
+  const prevTotal=totalPtsForPerson(oid); // points BEFORE this record
+  const susp=(vd&&vd.suspend)||(prevTotal<5&&newTotal>=5)||(vd&&vd.suspend);
+  let suspDuration='',suspUntil='';
+  if(susp){
+    if(vd&&vd.suspEOT){suspDuration='Until EOT (End of Tour)';}
+    else if(newTotal>=5){suspDuration='1 month (5 penalty points)';const u=new Date();u.setMonth(u.getMonth()+1);suspUntil=u.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+    else if(vd&&vd.suspDays){suspDuration=`${vd.suspDays} days`;const u=new Date();u.setDate(u.getDate()+vd.suspDays);suspUntil=u.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+  }
+  const notify=(vd&&vd.notify)?vd.notify:[];
+  const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),rank,first,last,unit,vtype,occur,notes,officer,date:date||new Date().toISOString(),speed:speed||'',pts,susp,suspDuration,suspUntil,notify,oid,ts:Date.now()};
+  records.unshift(rec);saveData();sbUpsertRecord(rec);
+  if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
+  sbUpsertRecord(rec);
+  const action=getActionForOccurrence(vtype,occur);
+  let msg='';
+  if(susp){
+    msg=`Record saved.\n\nLICENSE SUSPENDED\nDuration: ${suspDuration}${suspUntil?'\nUntil: '+suspUntil:''}\n\nNotify immediately:\n${notify.map(n=>'• '+n).join('\n')}`;
+  } else if(action.isSNR){
+    msg=`Record saved.\n\nOccurrence #${occur} — SNR NOTIFICATION REQUIRED\n${notify.length?'Notify: '+notify.join(', '):''}`;
+    if(pts>0)msg+=`\nPenalty points added: ${pts} (total: ${newTotal}/5)`;
+  } else {
+    msg=`Record saved.\n\nOccurrence #${occur} — IMP WARNING ONLY`;
+    if(pts>0)msg+=`\nPenalty points added: ${pts} (total: ${newTotal}/5)`;
+    const vdl=VIOLATIONS[vtype];
+    if(vdl&&vdl.snrFrom)msg+=`\n(SNR notification required from occurrence #${vdl.snrFrom})`;
+  }
+  alert(msg);renderNew();
+}
+
+// ─── RECORDS PAGE ─────────────────────────────────────────────────────────────
+function renderRecords(){
+  document.getElementById('page-records').innerHTML=`
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-bar" id="search-input" placeholder="Search name, rank, unit..." oninput="onSearch(this.value)" value="${_searchFilter}"/>
+  </div>
+  <div class="view-btns">
+    <button class="vbtn ${_viewMode==='list'?'active':''}" onclick="setView('list')" title="List view">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+    </button>
+    <button class="vbtn ${_viewMode==='person'?'active':''}" onclick="setView('person')" title="By person">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
+  </div>
+</div>
+<div class="filter-row">
+  <button class="fchip ${_filterMode==='all'?'active':''}" onclick="setFilter('all')">All</button>
+  <button class="fchip ${_filterMode==='suspended'?'active':''}" onclick="setFilter('suspended')">Suspended</button>
+  <button class="fchip ${_filterMode==='speeding'?'active':''}" onclick="setFilter('speeding')">Speeding</button>
+  <button class="fchip ${_filterMode==='driving'?'active':''}" onclick="setFilter('driving')">Driving</button>
+  <button class="fchip ${_filterMode==='conduct'?'active':''}" onclick="setFilter('conduct')">Conduct</button>
+</div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+  <select class="sort-sel" onchange="setSort(this.value)">
+    <option value="newest" ${_sortMode==='newest'?'selected':''}>Newest first</option>
+    <option value="oldest" ${_sortMode==='oldest'?'selected':''}>Oldest first</option>
+    <option value="name" ${_sortMode==='name'?'selected':''}>By last name</option>
+    <option value="pts" ${_sortMode==='pts'?'selected':''}>By penalty pts</option>
+  </select>
+</div>
+<div id="records-list"></div>`;
+  refreshList();
+}
+
+function onSearch(v){_searchFilter=v;refreshList();}
+function setView(v){_viewMode=v;renderRecords();}
+function setFilter(f){_filterMode=f;refreshList();}
+function setSort(s){_sortMode=s;refreshList();}
+
+function getFilteredSorted(){
+  let res=[...records];
+  // search
+  const s=_searchFilter.toLowerCase();
+  if(s)res=res.filter(r=>(r.first+' '+r.last+' '+r.rank+' '+r.unit+' '+r.vtype).toLowerCase().includes(s));
+  // filter
+  if(_filterMode==='suspended')res=res.filter(r=>isPersonCurrentlySuspended(r.oid));
+  else if(_filterMode==='speeding')res=res.filter(r=>r.vtype.toLowerCase().includes('speeding'));
+  else if(_filterMode==='driving')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving');
+  else if(_filterMode==='conduct')res=res.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct');
+  // sort
+  if(_sortMode==='newest')res.sort((a,b)=>b.ts-a.ts);
+  else if(_sortMode==='oldest')res.sort((a,b)=>a.ts-b.ts);
+  else if(_sortMode==='name')res.sort((a,b)=>a.last.localeCompare(b.last));
+  else if(_sortMode==='pts')res.sort((a,b)=>totalPtsForPerson(b.oid)-totalPtsForPerson(a.oid));
+  return res;
+}
+
+function refreshList(){
+  const list=document.getElementById('records-list');
+  if(!list)return;
+  const filtered=getFilteredSorted();
+  if(filtered.length===0){list.innerHTML=`<div class="empty">${records.length===0?'No records yet.':'No records match your filters.'}</div>`;return;}
+  if(_viewMode==='list')list.innerHTML=filtered.map(r=>buildListItem(r)).join('');
+  else list.innerHTML=buildPersonView(filtered);
+}
+
+function buildLicenseStatusBlock(r){
+  const status = getLicenseStatusAt(r.id);
+  const vd = VIOLATIONS[r.vtype]||{};
+
+  if(status.suspended){
+    // Find suspension details
+    let dur='', until='';
+    if(vd.suspend && vd.suspEOT){ dur='Until EOT (End of Tour)'; }
+    else if(vd.suspend && vd.suspDays){ dur=`${vd.suspDays} days`; }
+    else if(status.reason==='5pts'){ dur='1 month (5 penalty points)'; }
+    // Use stored suspUntil if available
+    if(r.suspUntil) until=r.suspUntil;
+
+    const label = status.isThresholdRecord
+      ? `LICENSE SUSPENDED — ${dur||''}${until?' until '+until:''}`
+      : `LICENSE SUSPENDED (carry-over)`;
+    const subLabel = status.isThresholdRecord
+      ? (status.reason==='5pts'
+          ? `5-point threshold reached at this record (${status.pts} pts total)`
+          : `Mandatory suspension — ${dur}`)
+      : `Suspended due to earlier violation`;
+    return `<div class="s-susp">${label}</div>
+      <div style="background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--rsm);padding:6px 11px;margin-top:3px;font-size:11px;color:var(--red-text)">${subLabel}</div>`;
+  } else {
+    const ptsAtTime = status.pts;
+    const remaining = 5 - ptsAtTime;
+    if(ptsAtTime>=4){
+      return `<div class="s-warn">License valid — ${ptsAtTime}/5 pts at time of record (${remaining} pt${remaining!==1?'s':''} until suspension)</div>`;
+    }
+    return `<div class="s-ok">License valid — ${ptsAtTime}/5 pts at time of record</div>`;
+  }
+}
+
+function buildListItem(r){
+  const dot=isPersonCurrentlySuspended(r.oid)?'susp':totalPtsForPerson(r.oid)>=4?'warn':'ok';
+  const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const expanded=_expandedId===r.id;
+  let html=`<div class="lv-item" onclick="toggleExpand('${r.id}')">
+    <div class="lv-status ${dot}"></div>
+    <div class="lv-main">
+      <div class="lv-name">${r.rank} ${r.first} ${r.last}</div>
+      <div class="lv-vtype">${r.vtype}</div>
+    </div>
+    <div class="lv-right">
+      <div class="lv-date">${d}</div>
+      ${r.pts>0?`<div class="lv-pts">${r.pts} pts</div>`:''}
+    </div>
+  </div>`;
+  if(expanded){
+    html+=`<div class="detail-panel">
+      <div style="margin-bottom:8px">
+        ${buildLicenseStatusBlock(r)}
+      </div>
+      ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px">Speed over limit: ${r.speed} km/h</p>`:''}
+      ${r.notes?`<p style="font-size:12px;color:var(--text2);margin-bottom:4px;font-style:italic">${r.notes}</p>`:''}
+      <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Reported by: ${r.officer||'—'} · Occurrence #${r.occur} · ${new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+      <div class="action-box"><p class="lbl">IMP Action Required</p>${buildActionSteps(r)}</div>
+      ${r.editedAt?`<div class="edit-badge">Edited: ${new Date(r.editedAt).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})} by ${r.editedBy||'—'}</div>`:''}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="color:var(--blue);border-color:var(--blue)" onclick="event.stopPropagation();_expandedId='${r.id}';generatePDFReport('single')">Print</button>
+        ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--amber-text);border-color:var(--amber)" onclick="event.stopPropagation();editRecord('${r.id}')">Edit</button>`}
+        ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteRecord('${r.id}')">Delete</button>`}
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function toggleExpand(id){
+  _expandedId=(_expandedId===id)?null:id;
+  refreshList();
+  // keep search focus
+  const si=document.getElementById('search-input');
+  if(si&&_searchFilter){si.focus();si.setSelectionRange(si.value.length,si.value.length);}
+}
+
+function buildPersonView(filtered){
+  // group by oid
+  const groups={};
+  filtered.forEach(r=>{
+    if(!groups[r.oid])groups[r.oid]={first:r.first,last:r.last,rank:r.rank,unit:r.unit,oid:r.oid,recs:[]};
+    groups[r.oid].recs.push(r);
+  });
+  // sort groups
+  let gList=Object.values(groups);
+  if(_sortMode==='name')gList.sort((a,b)=>a.last.localeCompare(b.last));
+  else if(_sortMode==='pts')gList.sort((a,b)=>totalPtsForPerson(b.oid)-totalPtsForPerson(a.oid));
+  else gList.sort((a,b)=>(b.recs[0].ts||0)-(a.recs[0].ts||0));
+
+  return gList.map(g=>{
+    const tp=totalPtsForPerson(g.oid);
+    const hasSusp=isPersonCurrentlySuspended(g.oid);
+    const cls=hasSusp?'susp':tp>=4?'warn':'ok';
+    const initials=(g.first[0]||'')+(g.last[0]||'');
+    const expanded=_expandedPerson===g.oid;
+    let html=`<div class="pv-card">
+      <div class="pv-header" onclick="togglePerson('${g.oid}')">
+        <div class="pv-avatar ${cls}">${initials}</div>
+        <div class="pv-info">
+          <div class="pv-name">${g.rank} ${g.first} ${g.last}</div>
+          <div class="pv-sub">${g.unit||'—'} · ${g.recs.length} violation${g.recs.length>1?'s':''}</div>
+          ${hasSusp?'<span class="badge b-red" style="margin-top:3px">Suspended</span>':tp>=4?'<span class="badge b-amber" style="margin-top:3px">'+tp+'/5 pts — near limit</span>':''}
+        </div>
+        <div>
+          <div class="pv-pts" style="color:${hasSusp?'var(--red)':tp>=4?'var(--amber)':'var(--blue)'}">${tp}</div>
+          <div class="pv-ptslbl">pts total</div>
+        </div>
+      </div>`;
+    if(expanded){
+      html+=`<div class="pv-records">`;
+      g.recs.forEach(r=>{
+        const d=new Date(r.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+        html+=`<div style="padding:10px 0;border-bottom:0.5px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <span class="badge b-blue" style="font-size:11px">${r.vtype.slice(0,40)}</span>
+            ${isReadOnly()?'':`<button class="btn btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0;margin-left:6px" onclick="deleteRecord('${r.id}')">Del</button>`}
+          </div>
+          ${r.pts>0?`<span class="badge b-amber">${r.pts} pts</span>`:''}
+          <div style="margin-top:5px">${buildLicenseStatusBlock(r)}</div>
+          ${r.speed?`<p style="font-size:12px;color:var(--text2);margin-top:4px">Speed over: ${r.speed} km/h</p>`:''}
+          ${r.notes?`<p style="font-size:12px;color:var(--text2);font-style:italic;margin-top:3px">${r.notes}</p>`:''}
+          <p style="font-size:11px;color:var(--text3);margin-top:4px">${r.officer||'—'} · Occ. #${r.occur} · ${d}</p>
+          <div class="action-box" style="margin-top:6px"><p class="lbl">IMP Action</p>${buildActionSteps(r)}</div>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+    return html;
+  }).join('');
+}
+
+function togglePerson(oid){_expandedPerson=(_expandedPerson===oid)?null:oid;refreshList();}
+
+// ─── DELETE WITH PIN ──────────────────────────────────────────────────────────
+// deleteRecord defined below
+
+function showPINModal(recordId){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to delete</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">This action cannot be undone.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmPIN('${recordId}')"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmPIN('${recordId}')">Delete</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
+}
+
+function confirmPIN(id){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='2685'){
+    document.getElementById('pin-modal').remove();
+    records=records.filter(r=>r.id!==id);
+    saveData();
+    sbDeleteRecord(id);
+    if(_viewMode==='person')_expandedPerson=null;else _expandedId=null;
+    refreshList();
+    renderDash();
+  } else {
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
+  }
+}
+
+// Admin can delete without PIN modal
+function deleteRecord(id){
+  if(isAdmin()){
+    if(!confirm('Delete this record?'))return;
+    records=records.filter(r=>r.id!==id);
+    saveData();
+    if(_viewMode==='person')_expandedPerson=null;else _expandedId=null;
+    refreshList();renderDash();
+  } else {
+    showPINModal(id);
+  }
+}
+
+// ─── ACTION STEPS ─────────────────────────────────────────────────────────────
+function buildActionSteps(r){
+  const vd=VIOLATIONS[r.vtype]||{};
+  const steps=[];let n=1;
+  const snrFrom=vd.snrFrom||1;
+  const occNum=r.occur||1;
+  const dynStatus = getLicenseStatusAt(r.id);
+  const requiresSNR = dynStatus.suspended || (occNum>=snrFrom);
+
+  // Step 1: always file occurrence report
+  steps.push(`<b>${n++}.</b> File <b>IMP Occurrence Report</b> — record in IMP daily occurrence book.`);
+
+  // Step 2: occurrence-specific action
+  if(vd.suspend){
+    steps.push(`<b>${n++}.</b> <b>Confiscate driving permit</b> immediately. Hand to IMP Station Commander.`);
+    if(vd.suspEOT) steps.push(`<b>${n++}.</b> Suspension: <b>until EOT</b> — violator may not operate any EUFOR/NATO vehicle.`);
+    else if(r.suspUntil) steps.push(`<b>${n++}.</b> Suspension: <b>${r.suspDuration}</b> (until ${r.suspUntil}).`);
+  } else if(dynStatus.suspended && dynStatus.isThresholdRecord){
+    steps.push(`<b>${n++}.</b> <b>5-point threshold reached</b> — confiscate driving permit. Suspension: <b>1 month</b>${r.suspUntil?' (until '+r.suspUntil+')':''}.`);
+  } else if(requiresSNR){
+    steps.push(`<b>${n++}.</b> Occurrence #${occNum} — <b>SNR/Branch Chief notification required</b> (threshold: from #${snrFrom}).`);
+  } else {
+    steps.push(`<b>${n++}.</b> Occurrence #${occNum} — <b>IMP warning issued</b>. SNR notification from occurrence #${snrFrom}.`);
+  }
+
+  // Step 3: no penalty points note for pedestrians/cyclists
+  if(vd.noPts){
+    steps.push(`<b>${n++}.</b> <b>No penalty points</b> apply — pedestrian/cyclist violation uses warning ladder only.`);
+  }
+
+  // Step 4: who to notify
+  if(requiresSNR && vd.notify && vd.notify.length){
+    steps.push(`<b>${n++}.</b> Notify via IMP Report: <b>${vd.notify.join(', ')}</b>.`);
+  }
+
+  // Step 5: FPM
+  if(requiresSNR && vd.notify && vd.notify.some(x=>x.includes('FPM'))){
+    steps.push(`<b>${n++}.</b> Submit copy to <b>FPM (Force Protection Manager)</b>.`);
+  }
+
+  // Step 6: HQ CAMP CMDT
+  if(requiresSNR && vd.notify && vd.notify.some(x=>x.includes('HQ CAMP CMDT'))){
+    steps.push(`<b>${n++}.</b> Forward to <b>HQ CAMP CMDT Operations Section</b>.`);
+  }
+
+  // Step 7: alcohol — medical cell
+  if(r.vtype.includes('alcohol')||r.vtype.includes('drugs')){
+    steps.push(`<b>${n++}.</b> Escort to <b>IMP Station</b>. Decide if <b>Medical Cell</b> referral needed.`);
+  }
+
+  return steps.map(s=>`<div style="margin-bottom:2px">${s}</div>`).join('');
+}
+
+// ─── QR SYNC ──────────────────────────────────────────────────────────────────
+function renderQR(){
+  const selOpts=records.length===0?'<option value="">No records available</option>':records.map((r,i)=>{const d=new Date(r.date).toLocaleDateString('en-GB');return `<option value="${i}">${r.rank} ${r.first} ${r.last} — ${r.vtype.slice(0,30)} (${d})</option>`;}).join('');
+  document.getElementById('page-qr').innerHTML=`
+<div class="card"><p class="sec">Generate QR — send a record</p>
+  <p class="hint" style="margin-bottom:10px">Select a record, generate QR, show it to another officer to scan.</p>
+  <div class="field"><label>Select record</label><select class="rec-select" id="qr-select" size="5">${selOpts}</select></div>
+  <button class="btn btn-primary" onclick="genQR()" ${records.length===0?'disabled':''}>Generate QR code</button>
+  <div id="qr-output" style="margin-top:12px"></div>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Scan QR — receive a record</p>
+  <p class="hint" style="margin-bottom:10px">Scan a QR code from another officer's screen.</p>
+  <div class="scan-area" id="scan-area">
+    <p>Camera will open here.</p>
+    <button class="btn btn-green" onclick="startScan()">Start camera scan</button>
+  </div>
+  <div id="scan-result"></div>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Manual paste (fallback)</p>
+  <p class="hint" style="margin-bottom:10px">Paste JSON text received from another officer.</p>
+  <div class="field"><textarea id="manual-paste" placeholder="Paste record JSON here..."></textarea></div>
+  <button class="btn" onclick="manualImport()">Import pasted data</button>
+  <div id="manual-result" style="margin-top:8px"></div>
+</div>`;
+}
+
+function genQR(){
+  const sel=document.getElementById('qr-select');
+  if(!sel||sel.selectedIndex<0||sel.value===''){alert('Please select a record first.');return;}
+  const rec=records[parseInt(sel.value)];if(!rec)return;
+  const payload=JSON.stringify({cbvt:1,r:rec});
+  const output=document.getElementById('qr-output');
+  if(payload.length>2953){output.innerHTML=`<div class="s-susp">Record too large for QR. Shorten the notes, or use JSON export.</div>`;return;}
+  window._lastQRPayload=payload;
+  output.innerHTML='<div class="qr-outer"><div id="qr-canvas"></div><p class="qr-info">Show this QR to another officer.<br><b>'+rec.rank+' '+rec.first+' '+rec.last+'</b><br>'+rec.vtype+'</p></div>'
+    +'<div style="margin-top:10px"><p style="font-size:12px;color:var(--text2);margin-bottom:6px">Camera not working? Share as text:</p>'
+    +'<button class="btn" id="copy-btn" onclick="copyJSON()">Copy record as text</button><div id="copy-result"></div></div>';
+  try{new QRCode(document.getElementById('qr-canvas'),{text:payload,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){output.innerHTML=`<div class="s-susp">QR library not loaded. Check connection and reload.</div>`;}
+}
+
+function startScan(){
+  const area=document.getElementById('scan-area');
+  area.innerHTML=`<p style="margin-bottom:10px">Choose scan method:</p>
+    <button class="btn btn-green" style="margin-bottom:8px" onclick="startCameraScan()">Use camera (live)</button>
+    <button class="btn" onclick="startFileScan()">Take photo / gallery</button>
+    <p style="font-size:11px;color:var(--text3);margin-top:8px">On iPhone: "Take photo" opens camera directly</p>`;
+}
+function startCameraScan(){
+  const area=document.getElementById('scan-area');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){area.innerHTML=`<p style="color:var(--red);margin-bottom:10px">Live camera not supported. Use "Take photo" instead.</p><button class="btn btn-green" onclick="startScan()">Back</button>`;return;}
+  area.innerHTML=`<video id="scan-video" autoplay playsinline muted style="width:100%;border-radius:var(--rsm);max-height:260px;object-fit:cover;display:block"></video><p style="font-size:12px;color:var(--text2);margin:6px 0">Point camera at QR code...</p><button class="btn" onclick="stopScan();startScan()">Cancel</button>`;
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}})
+    .then(stream=>{scanStream=stream;const v=document.getElementById('scan-video');if(!v){stopScan();return;}v.srcObject=stream;v.setAttribute('playsinline',true);v.muted=true;v.play().catch(()=>{});loadJsQR(()=>startDecodeLoop(v));})
+    .catch(err=>{let msg='Camera access denied.';if(err.name==='NotAllowedError')msg='Permission denied. Allow camera in browser settings.';else if(err.name==='NotFoundError')msg='No camera found.';else if(err.name==='NotReadableError')msg='Camera in use by another app.';area.innerHTML=`<p style="color:var(--red);margin-bottom:10px">${msg}</p><button class="btn btn-green" onclick="startScan()">Back</button>`;});
+}
+function startFileScan(){
+  const input=document.createElement('input');input.type='file';input.accept='image/*';input.capture='environment';input.style.display='none';
+  input.onchange=function(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const img=new Image();
+      img.onload=function(){
+        loadJsQR(()=>{
+          const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+          const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code=jsQR(imgData.data,imgData.width,imgData.height);
+          if(code&&code.data){
+            try{const p=JSON.parse(code.data);if(p.cbvt&&p.r){importSingleRecord(p.r);document.getElementById('scan-area').innerHTML='<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';}
+            else document.getElementById('scan-result').innerHTML='<div class="s-susp">QR not from this app.</div>';}
+            catch(ex){document.getElementById('scan-result').innerHTML='<div class="s-susp">Could not read QR data.</div>';}
+          } else document.getElementById('scan-result').innerHTML='<div class="import-already">No QR found. Try a clearer photo.</div>';
+        });
+      };img.src=ev.target.result;
+    };reader.readAsDataURL(file);document.body.removeChild(input);
+  };document.body.appendChild(input);input.click();
+}
+function stopScan(){if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}if(scanInterval){clearInterval(scanInterval);scanInterval=null;}}
+let jsQRLoaded=false;
+function loadJsQR(cb){
+  if(typeof jsQR!=='undefined'){jsQRLoaded=true;cb();return;}
+  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+  s.onload=()=>{jsQRLoaded=true;cb();};
+  s.onerror=()=>{const a=document.getElementById('scan-area');if(a)a.innerHTML='<p style="color:var(--red)">Could not load scanner. Check connection.</p><button class="btn" onclick="startScan()">Retry</button>';};
+  document.body.appendChild(s);
+}
+function startDecodeLoop(video){
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');let att=0;
+  scanInterval=setInterval(()=>{
+    if(!video){stopScan();return;}if(!video.videoWidth){att++;if(att>100)stopScan();return;}
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    try{ctx.drawImage(video,0,0);const d=ctx.getImageData(0,0,canvas.width,canvas.height);const code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+      if(code&&code.data){stopScan();
+        try{const p=JSON.parse(code.data);if(p.cbvt&&p.r)importSingleRecord(p.r);else document.getElementById('scan-result').innerHTML='<div class="s-susp">QR not from this app.</div>';}
+        catch(e){document.getElementById('scan-result').innerHTML='<div class="s-susp">Could not parse QR data.</div>';}
+        const a=document.getElementById('scan-area');if(a)a.innerHTML='<p>Scan another?</p><button class="btn btn-green" style="margin-top:8px" onclick="startScan()">Scan again</button>';
+      }
+    }catch(e){}
+  },250);
+}
+function manualImport(){
+  const txt=(document.getElementById('manual-paste').value||'').trim();
+  if(!txt){alert('Please paste some data first.');return;}
+  try{const d=JSON.parse(txt);importSingleRecord(d.cbvt?d.r:(d.r||d),'manual-result');}
+  catch(e){document.getElementById('manual-result').innerHTML='<div class="s-susp">Invalid JSON format.</div>';}
+}
+function importSingleRecord(rec,resultId){
+  const target=resultId||'scan-result';
+  const el=document.getElementById(target);
+  if(!rec||!rec.id||!rec.first||!rec.vtype){if(el)el.innerHTML='<div class="s-susp">Invalid record structure.</div>';return;}
+  if(records.find(r=>r.id===rec.id)){if(el)el.innerHTML='<div class="import-already">Record already exists. No duplicate added.</div>';return;}
+  records.unshift(rec);saveData();
+  if(officer) try{localStorage.setItem('cbvt_last_officer',officer);}catch(e){}
+  sbUpsertRecord(rec);
+  const d=new Date(rec.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600;margin-bottom:3px">Imported successfully</p><p>${rec.rank} ${rec.first} ${rec.last}</p><p>${rec.vtype} · ${d}</p>${rec.susp?'<p style="color:var(--red-text);font-weight:600;margin-top:3px">License suspended</p>':''}</div>`;
+}
+
+// ─── DATA PAGE ────────────────────────────────────────────────────────────────
+function renderData(){
+  document.getElementById('page-data').innerHTML=`
+<div class="card"><p class="sec">PDF reports</p>
+  <p class="hint" style="margin-bottom:10px">Generate a formatted PDF report. Requires internet once to load PDF library.</p>
+  <button class="btn btn-primary" onclick="generatePDFReport('all')" style="margin-bottom:8px">Full report — all records</button>
+  <button class="btn" onclick="generatePDFReport('suspended')" style="margin-bottom:8px">Suspended licenses only</button>
+  <div class="field" style="margin-top:10px;margin-bottom:6px">
+    <label>Report for a specific person</label>
+    <select id="pdf-person-sel">
+      <option value="">— Select person —</option>
+    </select>
+  </div>
+  <button class="btn" onclick="generatePersonReport()">Generate person report</button>
+  <p style="font-size:11px;color:var(--text3);margin-top:8px">To print a single record: open it in Records tab → "Print record".</p>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Export / share all records</p>
+  <p class="hint" style="margin-bottom:10px">Export as JSON file, or copy as text to paste directly into WhatsApp.</p>
+  <button class="btn btn-primary" onclick="exportJSON()" style="margin-bottom:8px">Export as JSON file</button>
+  <button class="btn" onclick="copyAllJSON()">Copy all records as text (for WhatsApp)</button>
+  <div id="copy-all-result" style="margin-top:8px"></div>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Import / synchronize</p>
+  <p class="hint" style="margin-bottom:10px">Paste JSON text from WhatsApp, or select a JSON file. Use <b>Replace all</b> when admin sends a sync — it replaces your entire database with the received data.</p>
+  <div class="field"><label>Paste JSON text (from WhatsApp)</label>
+    <textarea id="paste-import" placeholder="Paste JSON text here..." style="height:80px"></textarea>
+  </div>
+  <div class="btn-row" style="margin-bottom:10px">
+    <button class="btn btn-green" onclick="pasteImport('merge')">Merge (add new)</button>
+    <button class="btn btn-red" onclick="pasteImport('replace')">Replace all</button>
+  </div>
+  <div class="field"><label>— or select JSON file —</label><input type="file" id="import-file" accept=".json" style="font-size:13px;color:var(--text2);padding:6px 0"/></div>
+  <div class="btn-row">
+    <button class="btn" onclick="importJSON('merge')">Merge file</button>
+    <button class="btn btn-red" onclick="importJSON('replace')">Replace all from file</button>
+  </div>
+  <div id="import-result" style="margin-top:8px"></div>
+</div>
+<div class="card" style="margin-top:10px"><p class="sec">Session &amp; database info</p>
+  <p class="hint">Signed in as: <b>${getCurrentOfficer()||'—'}</b>${isAdmin()?' <span style="background:var(--amber-bg);color:var(--amber-text);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">ADMIN · Full access</span>':''}<br>
+  Sync status: <b>${_syncEnabled?'<span style="color:#16a34a">Online — syncing with Supabase</span>':'<span style="color:var(--amber-text)">Offline — local only</span>'}</b><br>
+  Records stored: <b>${records.length}</b><br>Storage used: <b>${Math.round(JSON.stringify(records).length/1024*10)/10} KB</b></p>
+  <button class="btn" style="margin-top:8px" onclick="manualSync()">Force sync now</button>
+  <button class="btn" style="margin-top:10px;color:var(--red);border-color:var(--red)" onclick="showLogout()">Sign out</button>
+</div>
+<div class="card" style="margin-top:10px;border-color:var(--red)"><p class="sec" style="color:var(--red)">Danger zone</p>
+  <p class="hint" style="margin-bottom:10px">Permanently delete all locally stored records. Export first.</p>
+  ${isReadOnly()?'<p style="font-size:13px;color:var(--text3)">Read-only access — delete not available.</p>':`<button class="btn btn-red" onclick="clearAll()">Delete all records</button>`}
+</div>`;
+  // Populate person select
+  const psel=document.getElementById('pdf-person-sel');
+  if(psel){
+    const pp={};
+    records.forEach(r=>{if(!pp[r.oid])pp[r.oid]={first:r.first,last:r.last,rank:r.rank,oid:r.oid};});
+    const ps=Object.values(pp).sort((a,b)=>a.last.localeCompare(b.last));
+    psel.innerHTML='<option value="">— Select person —</option>'+ps.map(p=>`<option value="${p.oid}">${p.rank} ${p.first} ${p.last}</option>`).join('');
+  }
+}
+function exportJSON(){
+  if(records.length===0){alert('No records to export.');return;}
+  const blob=new Blob([JSON.stringify({cbvt:1,exported:new Date().toISOString(),count:records.length,records},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='violations_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function copyAllJSON(){
+  if(records.length===0){alert('No records to copy.');return;}
+  const payload=JSON.stringify({cbvt:1,exported:new Date().toISOString(),count:records.length,records});
+  const result=document.getElementById('copy-all-result');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(payload)
+      .then(()=>{result.innerHTML='<div class="import-success"><p style="font-weight:600">Copied! ('+records.length+' records)</p><p>Paste into WhatsApp with message: <i>Synchronize database</i></p><p style="margin-top:4px;font-size:12px">Recipients: open app → Data → paste in Synchronize field → Replace all</p></div>';})
+      .catch(()=>showAllFallback(payload,result));
+  } else showAllFallback(payload,result);
+}
+function showAllFallback(payload,result){
+  result.innerHTML='<p style="font-size:12px;color:var(--text2);margin-bottom:6px">Select all and copy:</p><textarea style="width:100%;height:100px;font-size:10px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-family:monospace" readonly onclick="this.select()">'+payload+'</textarea>';
+}
+
+function pasteImport(mode){
+  const txt=(document.getElementById('paste-import').value||'').trim();
+  if(!txt){alert('Please paste JSON text first.');return;}
+  try{
+    const data=JSON.parse(txt);
+    const imported=data.records||(Array.isArray(data)?data:[data]);
+    applyImport(imported,mode,'import-result');
+    document.getElementById('paste-import').value='';
+  }catch(ex){document.getElementById('import-result').innerHTML='<div class="s-susp">Invalid JSON format. Make sure you copied the entire text.</div>';}
+}
+
+function importJSON(mode){
+  const file=document.getElementById('import-file').files[0];
+  if(!file){alert('Please select a JSON file first.');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      const imported=data.records||(Array.isArray(data)?data:[data]);
+      applyImport(imported,mode||'merge','import-result');
+    }catch(ex){document.getElementById('import-result').innerHTML='<div class="s-susp">Invalid file format.</div>';}
+  };reader.readAsText(file);
+}
+
+function normalizeRecord(r){
+  // Fill in missing fields from older app versions
+  if(!r.suspDuration)r.suspDuration='';
+  if(!r.suspUntil)r.suspUntil='';
+  if(!r.notify){
+    const vd=VIOLATIONS[r.vtype];
+    r.notify=(vd&&vd.notify)?vd.notify:[];
+  }
+  if(r.susp===undefined)r.susp=false;
+  if(!r.pts)r.pts=0;
+  if(!r.ts)r.ts=new Date(r.date||Date.now()).getTime();
+  if(!r.oid)r.oid=(r.first+'_'+r.last).toLowerCase().replace(/\s+/g,'_');
+  return r;
+}
+
+function applyImport(imported,mode,resultId){
+  const el=document.getElementById(resultId);
+  // Accept any record that has at minimum id + first/last name OR vtype
+  const valid=imported.filter(r=>r&&r.id&&(r.first||r.vtype)).map(normalizeRecord);
+  const invalid=imported.length-valid.length;
+  if(valid.length===0){
+    if(el)el.innerHTML='<div class="s-susp">No valid records found in the data.</div>';
+    return;
+  }
+  if(mode==='replace'){
+    if(!confirm('Replace ALL your local records with the received data? Your current records will be deleted.'))return;
+    records=valid;
+    records.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    saveData();
+    if(_syncEnabled) records.forEach(r=>sbUpsertRecord(r));
+    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">Database replaced.</p><p>${records.length} records loaded.${invalid>0?' '+invalid+' incomplete record(s) skipped.':''}</p></div>`;
+    renderData();renderDash();
+  } else {
+    const existing=new Set(records.map(r=>r.id));
+    let added=0;
+    valid.forEach(r=>{if(!existing.has(r.id)){records.push(r);added++;}});
+    records.sort((a,b)=>(b.ts||0)-(a.ts||0));saveData();
+    if(el)el.innerHTML=`<div class="import-success"><p style="font-weight:600">${added} new record(s) added.</p><p>${valid.length-added} duplicate(s) skipped.${invalid>0?' '+invalid+' incomplete skipped.':''}</p></div>`;
+    renderData();
+  }
+}
+function clearAll(){
+  if(records.length===0){alert('No records to delete.');return;}
+  if(isAdmin()){
+    if(!confirm(`Delete ALL ${records.length} record(s)? This cannot be undone.`))return;
+    records=[];saveData();alert('All records deleted.');renderData();renderDash();
+  } else {
+    showClearAllPINModal();
+  }
+}
+
+function showClearAllPINModal(){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to delete all</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">This will permanently delete all ${records.length} records. This cannot be undone.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmClearAll()"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmClearAll()">Delete all</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
+}
+
+function confirmClearAll(){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='2685'){
+    document.getElementById('pin-modal').remove();
+    const ids=[...records.map(r=>r.id)];
+    records=[];saveData();
+    // Delete all from Supabase
+    if(_syncEnabled){
+      ids.forEach(id=>sbDeleteRecord(id));
+    }
+    alert('All records deleted.');
+    renderData();renderDash();
+  } else {
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
+  }
+}
+
+// ─── COPY JSON ────────────────────────────────────────────────────────────────
+function copyJSON(){
+  const payload=window._lastQRPayload;if(!payload){alert('No record selected.');return;}
+  const btn=document.getElementById('copy-btn'),result=document.getElementById('copy-result');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(payload).then(()=>{if(btn)btn.textContent='Copied!';if(result)result.innerHTML='<p style="font-size:12px;color:var(--green-text);margin-top:6px">Copied. Send via WhatsApp/SMS. Recipient pastes in Manual paste field.</p>';setTimeout(()=>{if(btn)btn.textContent='Copy record as text';},3000);}).catch(()=>showTextFallback(payload,result));
+  } else showTextFallback(payload,result);
+}
+function showTextFallback(payload,result){
+  if(result)result.innerHTML='<p style="font-size:12px;color:var(--text2);margin-top:8px;margin-bottom:6px">Select all and copy:</p><textarea style="width:100%;height:80px;font-size:11px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-family:monospace" readonly onclick="this.select()">'+payload+'</textarea>';
+}
+
+// ─── LOGO ────────────────────────────────────────────────────────────────────
+const EUFOR_LOGO='data:image/png;base64,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';
+
+// ─── PDF REPORT ──────────────────────────────────────────────────────────────
+function loadJsPDF(cb){
+  if(typeof window.jspdf!=='undefined'){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload=()=>cb();
+  s.onerror=()=>alert('Could not load PDF library. Check internet connection.');
+  document.body.appendChild(s);
+}
+
+function generatePersonReport(){
+  const sel=document.getElementById('pdf-person-sel');
+  if(!sel||!sel.value){alert('Please select a person first.');return;}
+  generatePDFReport('person',sel.value);
+}
+
+function generatePDFReport(type, personOid){
+  loadJsPDF(()=>{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw=210,ph=297,ml=15,mr=15,cw=pw-ml-mr;
+    let y=20;
+    const now=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    function checkPage(needed){if(y+needed>ph-18){doc.addPage();y=20;drawHeader();}}
+
+    function drawHeader(){
+      doc.setFillColor(24,95,165);doc.rect(0,0,pw,16,'F');
+      try{doc.addImage(EUFOR_LOGO,'PNG',ml,1,14,14);}catch(e){}
+      doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
+      doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml+16,7);
+      doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+      doc.text('HQ EUFOR / NHQ Sa — Camp Butmir IMP Violation Tracker',ml+16,12);
+      doc.text('SOP 3901 — HQ Camp Commandant',pw-mr,12,{align:'right'});
+      doc.setTextColor(0,0,0);
+    }
+
+    function hline(yy,r,g,b){doc.setDrawColor(r||200,g||200,b||200);doc.line(ml,yy,pw-mr,yy);}
+
+    function badge(txt,x,yy,bgR,bgG,bgB,txtR,txtG,txtB){
+      doc.setFillColor(bgR,bgG,bgB);
+      const tw=doc.getTextWidth(txt)+4;
+      doc.roundedRect(x,yy-4,tw,5.5,1,1,'F');
+      doc.setTextColor(txtR,txtG,txtB);doc.setFontSize(7);doc.setFont('helvetica','bold');
+      doc.text(txt,x+2,yy);
+      doc.setTextColor(0,0,0);
+      return tw+2;
+    }
+
+    function statBox(x,y,w,h,label,value,vr,vg,vb){
+      doc.setFillColor(245,245,243);doc.rect(x,y,w,h,'F');
+      doc.setDrawColor(220,220,220);doc.rect(x,y,w,h,'S');
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+      doc.text(label,x+3,y+5);
+      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(vr||0,vg||0,vb||0);
+      doc.text(String(value),x+3,y+14);
+      doc.setTextColor(0,0,0);
+    }
+
+    drawHeader();
+
+    // ─── TITLE ───────────────────────────────────────────────────────────────
+    y=24;
+    const titles={all:'Violation Records — Full Report',suspended:'Suspended Licenses Report',single:'Individual Violation Record',person:'Individual Violator Report'};
+    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
+    doc.text(titles[type]||'Violation Report',ml,y);y+=6;
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+    doc.text('Generated: '+now+' | SOP 3901 — HQ Camp Commandant',ml,y);y+=4;
+    hline(y);y+=6;
+
+    // ─── GET RECORDS ─────────────────────────────────────────────────────────
+    let recs=[];
+    if(type==='all') recs=[...records].sort((a,b)=>a.ts-b.ts);
+    else if(type==='suspended') recs=records.filter(r=>isPersonCurrentlySuspended(r.oid)).sort((a,b)=>a.ts-b.ts);
+    else if(type==='single') recs=_expandedId?records.filter(r=>r.id===_expandedId):[];
+    else if(type==='person') recs=records.filter(r=>r.oid===personOid).sort((a,b)=>a.ts-b.ts);
+
+    // ─── SUMMARY (not for single record) ─────────────────────────────────────
+    if(type!=='single'){
+      const allRecs = type==='person' ? recs : records;
+      const uniqueOids=[...new Set(allRecs.map(r=>r.oid))];
+      const suspOids=uniqueOids.filter(o=>isPersonCurrentlySuspended(o));
+      const nearOids=uniqueOids.filter(o=>totalPtsForPerson(o)>=4&&!isPersonCurrentlySuspended(o));
+      const totalPts=allRecs.reduce((s,r)=>s+(r.pts||0),0);
+      const drivingCount=allRecs.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='driving').length;
+      const conductCount=allRecs.filter(r=>(VIOLATIONS[r.vtype]||{}).cat==='conduct').length;
+      const speedCount=allRecs.filter(r=>r.vtype.toLowerCase().includes('speeding')).length;
+
+      // Date range
+      const sorted=[...allRecs].sort((a,b)=>a.ts-b.ts);
+      const dateFrom=sorted.length?new Date(sorted[0].ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      const dateTo=sorted.length?new Date(sorted[sorted.length-1].ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+
+      // Row 1: main stats (4 boxes)
+      const bw=(cw-9)/4;
+      statBox(ml,y,bw,18,'Total records',allRecs.length,0,0,0);
+      statBox(ml+bw+3,y,bw,18,'Unique violators',uniqueOids.length,24,95,165);
+      statBox(ml+(bw+3)*2,y,bw,18,'Licenses suspended',suspOids.length,163,45,45);
+      statBox(ml+(bw+3)*3,y,bw,18,'Near suspension (4+)',nearOids.length,133,79,11);
+      y+=22;
+
+      // Row 2: violation breakdown (4 boxes)
+      statBox(ml,y,bw,18,'Total penalty pts',totalPts,133,79,11);
+      statBox(ml+bw+3,y,bw,18,'Driving violations',drivingCount,24,95,165);
+      statBox(ml+(bw+3)*2,y,bw,18,'Conduct violations',conductCount,63,109,17);
+      statBox(ml+(bw+3)*3,y,bw,18,'Speeding incidents',speedCount,80,80,80);
+      y+=22;
+
+      // Date range bar
+      doc.setFillColor(235,241,251);doc.rect(ml,y,cw,7,'F');
+      doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(24,95,165);
+      doc.text(`Report period: ${dateFrom} — ${dateTo}`,ml+3,y+5);
+      if(type==='person'&&recs.length>0){
+        const p=recs[0];
+        doc.setFont('helvetica','bold');
+        doc.text(`${p.rank} ${p.first} ${p.last} · ${p.unit||'—'}`,pw-mr,y+5,{align:'right'});
+      }
+      doc.setTextColor(0,0,0);
+      y+=11;
+
+      // ─── TOP VIOLATORS (only for all/suspended reports) ──────────────────
+      if(type!=='person'){
+        const topPeople=uniqueOids.map(o=>{
+          const pr=records.filter(r=>r.oid===o)[0];
+          return{oid:o,name:`${pr.rank} ${pr.first} ${pr.last}`,unit:pr.unit||'—',pts:totalPtsForPerson(o),count:records.filter(r=>r.oid===o).length,susp:isPersonCurrentlySuspended(o)};
+        }).sort((a,b)=>b.pts-a.pts||b.count-a.count).slice(0,5);
+
+        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+        doc.text('Top violators by penalty points:',ml,y);y+=5;
+
+        topPeople.forEach((p,i)=>{
+          checkPage(8);
+          doc.setFillColor(i%2===0?248:255,i%2===0?248:255,i%2===0?246:255);
+          doc.rect(ml,y-3,cw,7,'F');
+          doc.setFontSize(8);doc.setFont('helvetica',p.susp?'bold':'normal');
+          doc.setTextColor(p.susp?163:0,p.susp?45:0,p.susp?45:0);
+          doc.text(`${i+1}. ${p.name}`,ml+3,y+1);
+          doc.setTextColor(80,80,80);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+          doc.text(p.unit,ml+95,y+1);
+          doc.text(`${p.count} violations`,ml+130,y+1);
+          let bx=ml+155;
+          if(p.pts>0) bx+=badge(`${p.pts} pts`,bx,y+1,250,237,192,133,79,11);
+          if(p.susp) badge('SUSPENDED',bx,y+1,252,235,235,163,45,45);
+          y+=7;
+        });
+        y+=4;
+        hline(y);y+=6;
+      }
+    }
+
+    // ─── VIOLATION RECORDS ───────────────────────────────────────────────────
+    if(recs.length===0){
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+      doc.text('No records to display.',ml,y);
+    }
+
+    recs.forEach((r,idx)=>{
+      const dynStatus=getLicenseStatusAt(r.id);
+      const isSusp=dynStatus.suspended;
+      const cardH=isSusp?52:42;
+      checkPage(cardH+5);
+
+      const boxColor=isSusp?[252,235,235]:idx%2===0?[255,255,255]:[250,250,248];
+      doc.setFillColor(...boxColor);
+      doc.setDrawColor(isSusp?163:210,isSusp?45:210,isSusp?45:210);
+      doc.roundedRect(ml,y,cw,cardH,2,2,'FD');
+
+      // Left accent bar
+      doc.setFillColor(isSusp?163:24,isSusp?45:95,isSusp?45:165);
+      doc.rect(ml,y,2,cardH,'F');
+
+      const x=ml+5;let ry=y+6;
+
+      // Name + rank
+      doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+      doc.text(`${r.rank} ${r.first} ${r.last}`,x,ry);
+
+      // Date top right
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+      const dstr=new Date(r.date).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      doc.text(dstr,pw-mr-2,ry,{align:'right'});ry+=5;
+
+      // Unit + officer + occurrence
+      doc.setFontSize(7.5);doc.setTextColor(80,80,80);
+      doc.text(`Unit: ${r.unit||'—'}  |  Reported by: ${r.officer||'—'}  |  Occurrence #${r.occur} (this violation type)`,x,ry);ry+=5;
+
+      // Violation type
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(24,95,165);
+      const vtxt=r.vtype.length>75?r.vtype.slice(0,73)+'…':r.vtype;
+      doc.text(vtxt,x,ry);ry+=5;
+
+      // Badges
+      let bx=x;
+      if(r.pts>0) bx+=badge(`${r.pts} PTS`,bx,ry,250,237,192,133,79,11);
+      if(dynStatus.isThresholdRecord) bx+=badge('SUSPENDED HERE',bx,ry,252,235,235,163,45,45);
+      else if(isSusp) bx+=badge('SUSP. CARRY-OVER',bx,ry,252,235,235,200,100,100);
+      if(r.speed) bx+=badge(`${r.speed} km/h over`,bx,ry,230,230,230,60,60,60);
+      ry+=7;
+
+      // License status line
+      if(isSusp){
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(163,45,45);
+        const suspLine=dynStatus.isThresholdRecord
+          ?`Suspension triggered: ${dynStatus.reason==='5pts'?'5-point threshold ('+dynStatus.pts+' pts)':'mandatory suspension'}${r.suspUntil?' — until '+r.suspUntil:''}`
+          :`License suspended (carry-over from previous violation)`;
+        doc.text(suspLine,x,ry);ry+=4.5;
+        if(r.notify&&r.notify.length){
+          doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+          doc.text(`Notify: ${r.notify.join(', ')}`,x,ry);ry+=4.5;
+        }
+      } else {
+        doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+        doc.text(`License valid at time of record — ${dynStatus.pts}/5 pts accumulated`,x,ry);ry+=4;
+      }
+
+      if(r.notes){
+        doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(120,120,120);
+        const nl=doc.splitTextToSize(`Notes: ${r.notes}`,cw-10);
+        doc.text(nl[0]+(nl.length>1?'…':''),x,ry);
+      }
+
+      y+=cardH+4;
+    });
+
+    // ─── FOOTER ──────────────────────────────────────────────────────────────
+    const tp=doc.internal.getNumberOfPages();
+    for(let i=1;i<=tp;i++){
+      doc.setPage(i);
+      doc.setDrawColor(200,200,200);doc.line(ml,ph-12,pw-mr,ph-12);
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,150,150);
+      doc.text('NATO/EUFOR UNCLASSIFIED — RELEASABLE TO EU',ml,ph-7);
+      doc.text(`Page ${i} of ${tp}`,pw-mr,ph-7,{align:'right'});
+      doc.text('HQ EUFOR / NHQ Sa — Camp Butmir — SOP 3901',pw/2,ph-7,{align:'center'});
+    }
+
+    const personName=type==='person'&&recs.length?`_${recs[0].last}`:'';
+    const fname=`IMP_Report_${type}${personName}_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(fname);
+  });
+}
+
+// ─── LOGIN / SESSION ─────────────────────────────────────────────────────────
+function checkLogin(){
+  const officer=getCurrentOfficer();
+  if(officer&&OFFICER_PINS[officer]){
+    onLoginSuccess(officer);
+  } else {
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen(){
+  const old=document.getElementById('login-screen');
+  if(old)old.remove();
+  const officerOpts=Object.keys(OFFICER_PINS)
+    .filter(o=>o!=='ADMIN')
+    .map(o=>`<option value="${o}">${o}</option>`).join('')
+    +'<option disabled>──────────</option>'
+    +'<option value="ADMIN">ADMIN</option>';
+  const div=document.createElement('div');
+  div.id='login-screen';
+  div.className='login-screen';
+  div.innerHTML=`
+    <div class="login-box">
+      <img src="${typeof EUFOR_LOGO!=='undefined'?EUFOR_LOGO:''}" class="login-logo" alt="EUFOR"/>
+      <div class="login-title">Camp Butmir — IMP Tracker</div>
+      <div class="login-sub">NATO/EUFOR · SOP 3901 · Identify yourself to continue</div>
+      <select class="login-sel" id="login-officer">
+        <option value="">Select your designation...</option>
+        ${officerOpts}
+      </select>
+      <input type="password" inputmode="numeric" class="login-pin" id="login-pin"
+        placeholder="PIN" maxlength="4"
+        onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div id="login-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+      <p style="font-size:10px;color:var(--text3);margin-top:14px">Authorised personnel only · HQ EUFOR/NHQ Sa</p>
+    </div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>{const s=document.getElementById('login-officer');if(s)s.focus();},100);
+}
+
+function doLogin(){
+  const officer=(document.getElementById('login-officer').value||'').trim();
+  const pin=(document.getElementById('login-pin').value||'').trim();
+  const err=document.getElementById('login-err');
+  if(!officer){err.textContent='Please select your designation.';return;}
+  if(OFFICER_PINS[officer]!==pin){
+    err.textContent='Incorrect PIN. Try again.';
+    document.getElementById('login-pin').value='';
+    document.getElementById('login-pin').focus();
+    return;
+  }
+  onLoginSuccess(officer);
+}
+
+function onLoginSuccess(officer){
+  setCurrentOfficer(officer);
+  const screen=document.getElementById('login-screen');
+  if(screen)screen.remove();
+  // Show session bar
+  const bar=document.getElementById('session-bar');
+  const lbl=document.getElementById('session-label');
+  if(bar){bar.style.display='flex';}
+  const ro=READONLY_ROLES.includes(officer);
+  if(lbl){
+    if(officer==='ADMIN'){
+      lbl.innerHTML='<span style="background:rgba(255,255,255,.25);padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px">ADMIN</span>Full access';
+    } else if(ro){
+      lbl.innerHTML=officer+' <span style="background:rgba(255,255,255,.2);padding:2px 7px;border-radius:10px;font-size:11px;margin-left:4px">Read-only</span>';
+    } else {
+      lbl.textContent=officer+' · Signed in';
+    }
+  }
+  // Hide New tab for read-only users
+  const navNew=document.getElementById('nav-new');
+  if(navNew){navNew.style.display=ro?'none':'flex';}
+  setPage('dash');
+  // Start Supabase sync
+  updateSyncStatus('syncing');
+  initSync();
+}
+
+function showLogout(){
+  if(!confirm('Sign out of '+getCurrentOfficer()+'?'))return;
+  clearSession();
+  // Stop sync
+  if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
+  _syncEnabled=false;
+  const sel=document.getElementById('f-officer-sel');
+  if(sel)sel.value='';
+  const bar=document.getElementById('session-bar');
+  if(bar)bar.style.display='none';
+  showLoginScreen();
+}
+
+// ─── EDIT RECORD ──────────────────────────────────────────────────────────────
+function editRecord(id){
+  if(isAdmin()){ openEditForm(id); }
+  else { showEditPINModal(id); }
+}
+
+function showEditPINModal(recordId){
+  const old=document.getElementById('pin-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='pin-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius);padding:22px;width:100%;max-width:300px">
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px">Enter PIN to edit</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Editing requires supervisor authorisation.</p>
+    <input type="password" inputmode="numeric" id="pin-input" placeholder="PIN" maxlength="8"
+      style="width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:6px"
+      onkeydown="if(event.key==='Enter')confirmEditPIN('${recordId}')"/>
+    <div id="pin-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;text-align:center"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="document.getElementById('pin-modal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEditPIN('${recordId}')">Edit record</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const i=document.getElementById('pin-input');if(i)i.focus();},50);
+}
+
+function confirmEditPIN(id){
+  const input=document.getElementById('pin-input');
+  const err=document.getElementById('pin-err');
+  if(input.value==='0230'){
+    document.getElementById('pin-modal').remove();
+    openEditForm(id);
+  } else {
+    err.textContent='Incorrect PIN.';
+    input.value='';input.focus();
+  }
+}
+
+function openEditForm(id){
+  const rec=records.find(r=>r.id===id);
+  if(!rec){alert('Record not found.');return;}
+
+  // Build form same as renderNew but pre-filled
+  let rankOpts='<option value="">Select rank...</option>';
+  NATO_RANKS.forEach(g=>{rankOpts+=`<optgroup label="${g.g}">`;g.ranks.forEach(r=>{rankOpts+=`<option${r===rec.rank?' selected':''}>${r}</option>`;});rankOpts+='</optgroup>';});
+  let vD='<optgroup label="Driving violations">',vC='<optgroup label="Conduct violations">';
+  Object.entries(VIOLATIONS).forEach(([name,v])=>{
+    const lbl=v.suspend?' [LICENSE SUSPENDED]':v.pts>0?` [${v.pts} pt${v.pts>1?'s':''}]`:'';
+    const sel=name===rec.vtype?' selected':'';
+    const opt=`<option value="${name}"${sel}>${name}${lbl}</option>`;
+    if(v.cat==='driving')vD+=opt;else vC+=opt;
+  });
+  vD+='</optgroup>';vC+='</optgroup>';
+
+  const editedBy=getCurrentOfficer()||'Unknown';
+  const editedAt=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const modal=document.createElement('div');
+  modal.id='edit-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:998;overflow-y:auto;padding:12px';
+  modal.innerHTML=`
+    <div style="background:var(--bg3);border-radius:var(--radius);max-width:480px;margin:0 auto;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <p style="font-size:15px;font-weight:600;color:var(--text)">Edit violation record</p>
+        <button class="btn btn-sm" onclick="document.getElementById('edit-modal').remove()">✕ Cancel</button>
+      </div>
+      <div style="background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rsm);padding:8px 11px;font-size:12px;color:var(--amber-text);margin-bottom:12px">
+        Editing as: <b>${editedBy}</b> · ${editedAt}
+      </div>
+      <div class="card"><p class="sec">Violator details</p>
+        <div class="field"><label>NATO Rank</label><select id="ef-rank">${rankOpts}</select></div>
+        <div class="row2">
+          <div class="field"><label>First name</label><input id="ef-first" value="${rec.first}" autocomplete="off"/></div>
+          <div class="field"><label>Last name</label><input id="ef-last" value="${rec.last}" autocomplete="off"/></div>
+        </div>
+        <div class="field"><label>Unit / NSE</label><input id="ef-unit" value="${rec.unit||''}" autocomplete="off"/></div>
+      </div>
+      <div class="card"><p class="sec">Violation details</p>
+        <div class="field"><label>Violation type</label>
+          <select id="ef-vtype"><option value="">Select...</option>${vD}${vC}</select>
+        </div>
+        <div class="field"><label>Speed over limit (km/h)</label><input type="number" id="ef-speed" value="${rec.speed||''}" min="0" max="200"/></div>
+        <div class="field"><label>Location / notes</label><textarea id="ef-notes" style="min-height:68px">${rec.notes||''}</textarea></div>
+        <div class="row2">
+          <div class="field"><label>Reporting officer</label><input id="ef-officer" value="${rec.officer||''}" autocomplete="off"/></div>
+          <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="ef-date" value="${rec.date||''}"/></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveEditRecord('${id}')">Save changes</button>
+      <div style="height:8px"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveEditRecord(id){
+  const idx=records.findIndex(r=>r.id===id);
+  if(idx<0){alert('Record not found.');return;}
+  const r=records[idx];
+  const vtype=document.getElementById('ef-vtype').value||r.vtype;
+  const vd=VIOLATIONS[vtype]||{};
+  const newFirst=document.getElementById('ef-first').value.trim()||r.first;
+  const newLast=document.getElementById('ef-last').value.trim()||r.last;
+  const newOid=(newFirst+'_'+newLast).toLowerCase().replace(/\s+/g,'_');
+  // Recalculate pts and oid
+  records[idx]={
+    ...r,
+    rank:document.getElementById('ef-rank').value||r.rank,
+    first:newFirst,last:newLast,
+    unit:document.getElementById('ef-unit').value.trim()||r.unit,
+    vtype,
+    speed:document.getElementById('ef-speed').value||'',
+    notes:document.getElementById('ef-notes').value.trim(),
+    officer:document.getElementById('ef-officer').value.trim()||r.officer,
+    date:document.getElementById('ef-date').value||r.date,
+    pts:vd.pts||0,
+    notify:vd.notify||[],
+    oid:newOid,
+    editedAt:new Date().toISOString(),
+    editedBy:getCurrentOfficer()||'Unknown'
+  };
+  saveData();
+  sbUpsertRecord(records[idx]);
+  document.getElementById('edit-modal').remove();
+  _expandedId=id;
+  refreshList();
+  alert('Record updated successfully.');
+}
+
+// ─── SPEECH RECOGNITION ──────────────────────────────────────────────────────
+let _micRecognition = null;
+let _micListening = false;
+
+function toggleMic(){
+  if(_micListening){ stopMic(); return; }
+  startMic();
+}
+
+function startMic(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic-btn');
+  const status = document.getElementById('mic-status');
+
+  if(!SpeechRecognition){
+    if(status) status.textContent = 'Voice input not supported on this browser. Use Chrome (Android) or Safari (iOS).';
+    return;
+  }
+
+  _micRecognition = new SpeechRecognition();
+  _micRecognition.lang = 'en-US';
+  _micRecognition.continuous = true;
+  _micRecognition.interimResults = true;
+
+  let finalTranscript = '';
+
+  _micRecognition.onstart = function(){
+    _micListening = true;
+    if(btn) btn.classList.add('listening');
+    if(status) status.textContent = '🎙 Listening... tap mic to stop';
+    // Save existing text as base
+    const ta = document.getElementById('f-notes');
+    finalTranscript = ta ? ta.value : '';
+    if(finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
+  };
+
+  _micRecognition.onresult = function(e){
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal){ finalTranscript += t + ' '; }
+      else { interim = t; }
+    }
+    const ta = document.getElementById('f-notes');
+    if(ta) ta.value = finalTranscript + interim;
+  };
+
+  _micRecognition.onerror = function(e){
+    stopMic();
+    const status = document.getElementById('mic-status');
+    let msg = 'Voice input error.';
+    if(e.error === 'not-allowed') msg = 'Microphone access denied. Allow microphone in browser settings.';
+    else if(e.error === 'no-speech') msg = 'No speech detected. Try again.';
+    else if(e.error === 'network') msg = 'Network error. Voice recognition may require internet.';
+    if(status) status.textContent = msg;
+  };
+
+  _micRecognition.onend = function(){
+    if(_micListening) stopMic();
+  };
+
+  try {
+    _micRecognition.start();
+  } catch(e) {
+    if(status) status.textContent = 'Could not start microphone.';
+  }
+}
+
+function stopMic(){
+  _micListening = false;
+  const btn = document.getElementById('mic-btn');
+  const status = document.getElementById('mic-status');
+  if(_micRecognition){ try{ _micRecognition.stop(); }catch(e){} _micRecognition = null; }
+  if(btn) btn.classList.remove('listening');
+  if(status) status.textContent = '';
+}
+
+// Stop mic when navigating away from New tab
+const _origSetPage = setPage;
+// ─── MANUAL SYNC ─────────────────────────────────────────────────────────────
+async function manualSync(){
+  updateSyncStatus('syncing');
+  renderData(); // refresh to show syncing
+  const changed = await sbPullAll();
+  await sbPushAll();
+  updateSyncStatus(_syncEnabled?'online':'offline');
+  renderData();
+  if(changed){
+    renderDash();
+    if(currentPage==='records') renderRecords();
+    alert('Sync complete. Records updated.');
+  } else {
+    alert('Sync complete. Already up to date.');
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadData();
+checkLogin();
+</script>
+</body>
+</html>
